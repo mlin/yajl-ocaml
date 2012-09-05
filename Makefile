@@ -1,5 +1,5 @@
 default: all
-.PHONY: default all test clean git-submodule-incantations
+.PHONY: default all test git-submodule-incantations tidy clean
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
@@ -27,7 +27,9 @@ git-submodule-incantations:
 	git submodule sync
 	git submodule update
 
-clean:
+tidy:
 	cd src && ocamlbuild -clean
+
+clean: tidy
 	cd upstream && (make clean || true)
 	rm -rf upstream/local

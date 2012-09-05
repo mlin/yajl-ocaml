@@ -1,1 +1,4 @@
 *.bak
+src/_build/
+src/test_yajl.native
+src/*.byte

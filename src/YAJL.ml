@@ -26,6 +26,9 @@ type 'a parser = {
   c_parser : 'a c_parser
 }
 
+exception Parse_error of string
+Callback.register_exception "yajl_ocaml_parse_error" (Parse_error "")
+
 type parser_options = [
     `Allow_comments
   | `Dont_validate_strings
@@ -86,6 +89,12 @@ Callback.register "yajl_ocaml_dispatch_int"
         | `Parse_numbers ((`Int f), _) -> dsp.ctx <- f dsp.ctx i; true
         | _ -> assert false
     with exn -> dsp.exn <- Some exn; false
+Callback.register "yajl_ocaml_dispatch_int_overflow"
+  fun dsp i ->
+    (* Record exception for an integer that can represented in the C long long type, but not the
+       OCaml int type. *)
+    dsp.exn <- Some (Parse_error ("integer overflow: " ^ (Int64.to_string i)))
+    false
 Callback.register "yajl_ocaml_dispatch_int64"
   fun dsp i ->
     try
@@ -119,9 +128,6 @@ Callback.register "yajl_ocaml_dispatch_start_array"
   fun dsp -> try dsp.ctx <- dsp.cbs.on_start_array dsp.ctx; true with exn -> dsp.exn <- Some exn; false
 Callback.register "yajl_ocaml_dispatch_end_array"
   fun dsp -> try dsp.ctx <- dsp.cbs.on_end_array dsp.ctx; true with exn -> dsp.exn <- Some exn; false
-
-exception Parse_error of string
-Callback.register_exception "yajl_ocaml_parse_error" (Parse_error "parse error: integer overflow")
 
 external yajl_ocaml_parse : 'a c_parser -> 'a dispatch_context -> string -> int -> int -> unit = "yajl_ocaml_parse"
 

@@ -97,9 +97,18 @@ int yajl_ocaml_on_bool(void *ctx, int boolVal) {
 }
 
 int yajl_ocaml_on_int(void *ctx, long long i) {
-  BEGIN_DISPATCH()
-  /* TODO: detect overflow */
-  DISPATCH_VALUE(int, Val_long(i))
+  if (i >= Min_long && i <= Max_long) {
+    BEGIN_DISPATCH()
+    DISPATCH_VALUE(int, Val_long(i))
+  }
+  else {
+    /* We've encountered an integer that can be represented by C long long, but not OCaml int.
+       A special OCaml dispatch function will take care of recording the exception. */
+    BEGIN_DISPATCH()
+    CAMLlocal1(box);
+    box = caml_copy_int64(i);
+    DISPATCH_VALUE(int_overflow, box)
+  }
 }
 
 int yajl_ocaml_on_int64(void *ctx, long long i) {
