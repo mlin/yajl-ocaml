@@ -1,7 +1,6 @@
+#include <stdlib.h>
 #include <memory.h>
-#include <malloc/malloc.h>
 #include <assert.h>
-#include <stdio.h>
 
 #include <yajl/yajl_common.h>
 #include <yajl/yajl_parse.h>
@@ -199,7 +198,7 @@ value yajl_ocaml_make(value number_mode) {
     p->cbs.yajl_number = yajl_ocaml_on_number;
     break;
   default:
-    assert(FALSE);
+    assert(0);
   }
 
   /* instantiate YAJL parser */
@@ -270,7 +269,7 @@ value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len) {
        exception) */
     break;
 
-  default: assert(FALSE);
+  default: assert(0);
   }
 
   /* clean up and raise an OCaml exception for any parser error */
@@ -306,7 +305,7 @@ value yajl_ocaml_complete_parse(value box, value dsp) {
     /* ocaml code will take care of client_canceled */
     break;
 
-    default: assert(FALSE);
+    default: assert(0);
   }
 
   p->op.dsp_ctx = NULL;
