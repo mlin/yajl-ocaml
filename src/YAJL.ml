@@ -119,6 +119,9 @@ Callback.register "yajl_ocaml_dispatch_number"
     with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_string"
   fun p buf ofs len -> try p.ctx <- p.callbacks.on_string p.ctx buf ofs len; true with exn -> p.state <- Exception exn; false
+let the_empty_string = ""
+Callback.register "yajl_ocaml_dispatch_empty_string"
+  fun p -> try p.ctx <- p.callbacks.on_string p.ctx the_empty_string 0 0; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_start_map"
   fun p -> try p.ctx <- p.callbacks.on_start_map p.ctx; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_map_key"

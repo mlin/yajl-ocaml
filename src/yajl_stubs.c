@@ -67,6 +67,8 @@ More elaborate logic for when we have to pass along a buffer (in string+offset+l
 If YAJL has given us data within p->buf, give OCaml the corresponding region within p->orig_buf.
 Otherwise, allocate a new OCaml string and copy the data into it.
 (see how these are initialized in yajl_ocaml_parse, below)
+
+TODO: optimization for empty string
 */
 #define DISPATCH_BUFFER(nm) \
   CAMLlocalN(args,4); \
@@ -131,8 +133,14 @@ int yajl_ocaml_on_number(void *ctx, const char *buf, size_t len) {
 }
 
 int yajl_ocaml_on_string(void *ctx, const unsigned char *buf, size_t len) {
-  BEGIN_DISPATCH()
-  DISPATCH_BUFFER(string)
+  if (len>0) {
+    BEGIN_DISPATCH()
+    DISPATCH_BUFFER(string)
+  }
+  else {
+    BEGIN_DISPATCH()
+    DISPATCH_UNIT(empty_string)
+  }
 }
 
 int yajl_ocaml_on_start_map(void *ctx) {
