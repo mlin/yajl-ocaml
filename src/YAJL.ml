@@ -19,11 +19,19 @@ type 'a callbacks = {
   on_end_array : 'a -> 'a
 }
 
-type 'a c_parser
+type 'a c_parser (* maintained by the C stubs *)
+
+type parser_state =
+  | Open
+  | Parsing
+  | Closed
+  | Exception of exn
 
 type 'a parser = {
   callbacks : 'a callbacks;
-  c_parser : 'a c_parser
+  c_parser : 'a c_parser;
+  mutable state : parser_state;
+  mutable ctx : 'a (* user's context value *)
 }
 
 exception Parse_error of string
@@ -47,7 +55,7 @@ external yajl_ocaml_make : number_mode -> 'a c_parser = "yajl_ocaml_make"
 external yajl_ocaml_free : 'a c_parser -> unit = "yajl_ocaml_free"
 external yajl_ocaml_config : 'a c_parser -> int -> int -> unit = "yajl_ocaml_config"
 
-let make_parser ?(options=[]) cbs =
+let make_parser ?(options=[]) cbs ctx =
   let mode = match cbs.on_number with
     | `Parse_numbers ((`Int _), _) -> Parse_with_int
     | `Parse_numbers ((`Int64 _), _) -> Parse_with_int64
@@ -64,107 +72,117 @@ let make_parser ?(options=[]) cbs =
         | `Allow_partial_values -> 0x10
       yajl_ocaml_config c_parser n 1
     options
-  { callbacks = cbs; c_parser = c_parser }
+  { callbacks = cbs; c_parser = c_parser; state = Open; ctx = ctx }
 
-(* internal context value used by our dispatch functions during a parse operation (separate from
-   user's context value) *)
-type 'a dispatch_context = {
-  cbs : 'a callbacks;
-  mutable ctx : 'a;
-  mutable exn : exn option
-}
-
-(* OCaml dispatch functions: the C callbacks (invoked by YAJL) will invoke these OCaml callbacks,
-   which in turn dispatch the events to the user's callbacks. The dispatch functions also take care
-   of updating the user's context value and buffering any exception raised by the user's callbacks.
-   *)
+(* OCaml dispatch functions: the C callbacks (invoked by YAJL) will invoke
+   these OCaml callbacks, which in turn dispatch the events to the user's
+   callbacks. The dispatch functions also take care of updating the user's
+   context value and buffering any exception raised by the user's callbacks. *)
 Callback.register "yajl_ocaml_dispatch_null" 
-  fun dsp -> try dsp.ctx <- dsp.cbs.on_null dsp.ctx; true with exn -> dsp.exn <- Some exn; false
+  fun p -> try p.ctx <- p.callbacks.on_null p.ctx; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_bool"
-  fun dsp b -> try dsp.ctx <- dsp.cbs.on_bool dsp.ctx b; true with exn -> dsp.exn <- Some exn; false
+  fun p b -> try p.ctx <- p.callbacks.on_bool p.ctx b; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_int"
-  fun dsp i ->
+  fun p i ->
     try
-      match dsp.cbs.on_number with
-        | `Parse_numbers ((`Int f), _) -> dsp.ctx <- f dsp.ctx i; true
+      match p.callbacks.on_number with
+        | `Parse_numbers ((`Int f), _) -> p.ctx <- f p.ctx i; true
         | _ -> assert false
-    with exn -> dsp.exn <- Some exn; false
+    with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_int_overflow"
-  fun dsp i ->
-    (* Record exception for an integer that can represented in the C long long type, but not the
-       OCaml int type. *)
-    dsp.exn <- Some (Parse_error ("integer overflow: " ^ (Int64.to_string i)))
+  fun p i ->
+    (* Record exception for an integer that can represented in the C long long
+       type, but not the OCaml int type. *)
+    p.state <- Exception (Parse_error ("integer overflow: " ^ (Int64.to_string i)))
     false
 Callback.register "yajl_ocaml_dispatch_int64"
-  fun dsp i ->
+  fun p i ->
     try
-      match dsp.cbs.on_number with
-        | `Parse_numbers ((`Int64 f), _) -> dsp.ctx <- f dsp.ctx i; true
+      match p.callbacks.on_number with
+        | `Parse_numbers ((`Int64 f), _) -> p.ctx <- f p.ctx i; true
         | _ -> assert false
-    with exn -> dsp.exn <- Some exn; false
+    with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_float"
-  fun dsp x ->
+  fun p x ->
     try
-      match dsp.cbs.on_number with
-        | `Parse_numbers (_, f) -> dsp.ctx <- f dsp.ctx x; true
+      match p.callbacks.on_number with
+        | `Parse_numbers (_, f) -> p.ctx <- f p.ctx x; true
         | _ -> assert false
-    with exn -> dsp.exn <- Some exn; false
+    with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_number"
-  fun dsp buf ofs len ->
+  fun p buf ofs len ->
     try
-      match dsp.cbs.on_number with
-        | `Raw_numbers f -> dsp.ctx <- f dsp.ctx buf ofs len; true
+      match p.callbacks.on_number with
+        | `Raw_numbers f -> p.ctx <- f p.ctx buf ofs len; true
         | _ -> assert false
-    with exn -> dsp.exn <- Some exn; false
+    with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_string"
-  fun dsp buf ofs len -> try dsp.ctx <- dsp.cbs.on_string dsp.ctx buf ofs len; true with exn -> dsp.exn <- Some exn; false
+  fun p buf ofs len -> try p.ctx <- p.callbacks.on_string p.ctx buf ofs len; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_start_map"
-  fun dsp -> try dsp.ctx <- dsp.cbs.on_start_map dsp.ctx; true with exn -> dsp.exn <- Some exn; false
+  fun p -> try p.ctx <- p.callbacks.on_start_map p.ctx; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_map_key"
-  fun dsp buf ofs len -> try dsp.ctx <- dsp.cbs.on_map_key dsp.ctx buf ofs len; true with exn -> dsp.exn <- Some exn; false
+  fun p buf ofs len -> try p.ctx <- p.callbacks.on_map_key p.ctx buf ofs len; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_end_map"
-  fun dsp -> try dsp.ctx <- dsp.cbs.on_end_map dsp.ctx; true with exn -> dsp.exn <- Some exn; false
+  fun p -> try p.ctx <- p.callbacks.on_end_map p.ctx; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_start_array"
-  fun dsp -> try dsp.ctx <- dsp.cbs.on_start_array dsp.ctx; true with exn -> dsp.exn <- Some exn; false
+  fun p -> try p.ctx <- p.callbacks.on_start_array p.ctx; true with exn -> p.state <- Exception exn; false
 Callback.register "yajl_ocaml_dispatch_end_array"
-  fun dsp -> try dsp.ctx <- dsp.cbs.on_end_array dsp.ctx; true with exn -> dsp.exn <- Some exn; false
+  fun p -> try p.ctx <- p.callbacks.on_end_array p.ctx; true with exn -> p.state <- Exception exn; false
 
-external yajl_ocaml_parse : 'a c_parser -> 'a dispatch_context -> string -> int -> int -> unit = "yajl_ocaml_parse"
+external yajl_ocaml_parse : 'a c_parser -> 'a parser -> string -> int -> int -> unit = "yajl_ocaml_parse"
 
-let parse ?(ofs=0) ?len parser ctx buf =
+let parse ?context ?(ofs=0) ?len parser buf =
   if (ofs < 0 || ofs > String.length buf - 1) then invalid_arg "YAJL.parse: ofs"
   let maxlen = String.length buf - ofs
   let len = match len with
     | None -> maxlen
     | Some k when k >= 0 && k <= maxlen -> k
     | _ -> invalid_arg "YAJL.parse: len"
-  if len = 0 then ctx
-  else
-    (* initialize dispatch_context *)
-    let dsp = {
-      cbs = parser.callbacks;
-      ctx = ctx;
-      exn = None
-    }
+
+  match parser.state with
+    | Open -> ()
+    | Parsing -> failwith "YAJL.parse: overlapping invocations"
+    | Closed -> failwith "YAJL.parse: invocation following YAJL.complete_parse"
+    | Exception _ -> failwith "YAJL.parse: invocation following a previous exception"
+
+  match context with
+    | Some thing -> parser.ctx <- thing
+    | None -> ()
+
+  if len > 0 then
     (* let C stubs and YAJL do their thing *)
-    yajl_ocaml_parse parser.c_parser dsp buf ofs len
-    (* re-raise any exception raised by the user's callbacks; otherwise return the updated user
-       context value. *)
-    match dsp.exn with
-      | Some exn -> raise exn 
-      | None -> dsp.ctx
+    parser.state <- Parsing
+    yajl_ocaml_parse parser.c_parser parser buf ofs len
 
+    (* re-raise any exception raised by the user's callbacks *)
+    match parser.state with
+      | Parsing -> parser.state <- Open
+      | Exception exn -> raise exn 
+      | _ -> assert false
 
-external yajl_ocaml_complete_parse : 'a c_parser -> 'a dispatch_context -> unit = "yajl_ocaml_complete_parse"
+external yajl_ocaml_complete_parse : 'a c_parser -> 'a parser -> unit = "yajl_ocaml_complete_parse"
 
-let complete_parse parser ctx =
-  let dsp = {
-    cbs = parser.callbacks;
-    ctx = ctx;
-    exn = None
-  }
-  yajl_ocaml_complete_parse parser.c_parser dsp
-  match dsp.exn with
-    | Some exn -> raise exn
-    | None -> dsp.ctx
+let identity x = x
 
+let complete_parse ?context ?(t=identity) parser =
+  match parser.state with
+    | Open -> ()
+    | Parsing -> failwith "YAJL.complete_parse: overlapping invocations"
+    | Closed -> failwith "YAJL.complete_parse: multiple invocations"
+    | Exception _ -> failwith "YAJL.complete_parse: invocation following a previous exception"
+
+  match context with
+    | Some thing -> parser.ctx <- thing
+    | None -> ()
+  
+  parser.state <- Parsing
+  yajl_ocaml_complete_parse parser.c_parser parser
+
+  (* re-raise any exception raised by the user's callback; otherwise, return
+     the final context value *)
+  match parser.state with
+    | Parsing -> parser.state <- Closed; t parser.ctx
+    | Exception exn -> raise exn
+    | _ -> assert false
+
+let last_context ?(t=identity) { ctx } = t ctx

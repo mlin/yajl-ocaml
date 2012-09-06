@@ -46,11 +46,14 @@ let raw_callbacks = {
 let int_callbacks = { raw_callbacks with YAJL.on_number = `Parse_numbers ((`Int on_int), on_float) }
 let int64_callbacks = { raw_callbacks with YAJL.on_number = `Parse_numbers ((`Int64 on_int64), on_float) }
 
-(* Basic tests with a simple JSON: make sure we get all events, and try the three different modes
-   for parsing numbers *)
 module Basic = struct
+  (* Basic tests with a simple JSON: make sure we get all events, and try the
+     three different modes for parsing numbers *)
+
   let json = "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\"]}"
-  let parse_json parser = List.rev (YAJL.complete_parse parser (YAJL.parse parser [] json))
+  let parse_json parser =
+    YAJL.parse parser json
+    List.rev (YAJL.complete_parse parser)
 
   let raw () = 
     let correct =
@@ -62,7 +65,7 @@ module Basic = struct
             String "bar";
           End_array;
        End_map]
-    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser raw_callbacks))
+    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser raw_callbacks []))
       
 
   let int () = 
@@ -75,7 +78,7 @@ module Basic = struct
             String "bar";
           End_array;
        End_map]
-    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int_callbacks))
+    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int_callbacks []))
   
   let int64 () =
     let correct =
@@ -87,7 +90,7 @@ module Basic = struct
             String "bar";
           End_array;
        End_map]
-    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int64_callbacks))
+    assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int64_callbacks []))
 
   let tests = [
     "raw numbers" >:: raw;
@@ -95,23 +98,26 @@ module Basic = struct
     "int64s and floats" >:: int64
   ]
 
-(* Test giving JSON to YAJL in multiple parts *)
 module MultiBuffer = struct
+  (* Test giving JSON to YAJL in multiple parts *)
+
   let json = "{\"foo\": [\"Lorem\", \"ipsum\", \"dolor\", \"sit\", \"amet\"]}"
   let json_len = String.length json
   let json_half1 = String.sub json 0 (json_len/2)
   let json_half2 = String.sub json (json_len/2)  (String.length json - json_len/2)
 
   let halves () =
-    let parser = YAJL.make_parser raw_callbacks
-    let inter1 = YAJL.parse parser [] json_half1
+    let parser = YAJL.make_parser raw_callbacks []
+
+    YAJL.parse parser json_half1
+    let inter = YAJL.last_context ~t:List.rev parser
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
-      List.rev inter1
+      inter
 
-    let inter2 = YAJL.parse parser inter1 json_half2
-    let rslt = List.rev (YAJL.complete_parse parser inter2)
+    YAJL.parse parser json_half2
+    let rslt = YAJL.complete_parse ~t:List.rev parser
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array;
@@ -119,14 +125,47 @@ module MultiBuffer = struct
        End_array; End_map]
       rslt
 
-  (* TODO: more elaborate multipart tests; test giving partial buffers (ofs>0) *)
+  (* TODO: more elaborate multipart tests; test giving partial buffers
+      (ofs>0); test overriding context value *)
 
   let tests = [
     "two halves" >:: halves
   ]
 
-(* Test handling of unrepresentable JSON numbers *)
+module CallbackExceptions = struct
+  exception The_exception
+
+  let trivial () =
+    let parser = YAJL.make_parser {raw_callbacks with YAJL.on_start_map = (fun _ -> raise The_exception)} []
+    assert_raises The_exception (fun () -> YAJL.parse parser "{}")
+
+  let interruption () =
+    let parser = YAJL.make_parser {raw_callbacks with
+      YAJL.on_null = (fun _ -> raise The_exception);
+    } []
+    assert_raises The_exception (fun () -> YAJL.parse parser "{\"foo\": [1,2,null,3,4]}")
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; Start_array; Number "1"; Number "2"]
+      YAJL.last_context ~t:List.rev parser
+
+  let tests = [
+    "trivial" >:: trivial;
+    "interruption" >:: interruption
+  ]
+
+module StateErrors = struct
+  (* TODO: test receipt of Failure errors due to calling methods at impermissible times *)
+
+  let tests = []
+
+module ParseErrors = struct
+  (* TODO: test receipt of Parse_error when using malformed JSON *)
+
+  let tests = []
+
 module NumberOverflow = struct
+  (* Test receipt of Parse_error due to unrepresentable JSON numbers *)
+
   let assert_integer_overflow f =
     try
       ignore (f ())
@@ -143,44 +182,56 @@ module NumberOverflow = struct
   let above_int64_max_int () = 
     let n = sprintf "%s0" (Int64.to_string Int64.max_int)
     let json = sprintf "{\"foo\": %s}" n
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks) [] json)
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int64_callbacks) [] json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks []) json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int64_callbacks []) json)
+    let parser = YAJL.make_parser raw_callbacks []
+    YAJL.parse parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Number n; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser raw_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev parser
 
   let below_int64_min_int () = 
     let n = sprintf "%s0" (Int64.to_string Int64.min_int)
     let json = sprintf "{\"foo\": %s}" n
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks) [] json)
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int64_callbacks) [] json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks []) json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int64_callbacks []) json)
+    let raw_parser = YAJL.make_parser raw_callbacks []
+    YAJL.parse raw_parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Number n; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser raw_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev raw_parser
 
   let above_ocaml_max_int () = 
     let n = Int64.succ (Int64.of_int Pervasives.max_int)
     let ns = Int64.to_string n
     let json = sprintf "{\"foo\": %s}" ns
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks) [] json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks []) json)
+    let int64_parser = YAJL.make_parser int64_callbacks []
+    YAJL.parse int64_parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Int64 n; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser int64_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev int64_parser
+    let raw_parser = YAJL.make_parser raw_callbacks []
+    YAJL.parse raw_parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Number ns; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser raw_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev raw_parser
 
   let below_ocaml_min_int () = 
     let n = Int64.pred (Int64.of_int Pervasives.min_int)
     let ns = Int64.to_string n
     let json = sprintf "{\"foo\": %s}" ns
-    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks) [] json)
+    assert_integer_overflow (fun () -> YAJL.parse (YAJL.make_parser int_callbacks []) json)
+    let int64_parser = YAJL.make_parser int64_callbacks []
+    YAJL.parse int64_parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Int64 n; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser int64_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev int64_parser
+    let raw_parser = YAJL.make_parser raw_callbacks []
+    YAJL.parse raw_parser json
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Number ns; End_map] 
-      List.rev (YAJL.parse (YAJL.make_parser raw_callbacks) [] json)
+      YAJL.complete_parse ~t:List.rev raw_parser
 
   let tests = [
     "above Int64.max_int" >:: above_int64_max_int;
@@ -191,18 +242,17 @@ module NumberOverflow = struct
 
 module ParserOptions = struct
   (* TODO: test setting parser options *)
-  let tests = []
 
-module CallbackExceptions = struct
-  (* TODO: test raising exceptions from within callbacks *)
   let tests = []
 
 let all_tests = ("yajl-ocaml tests" >::: [
     "basic" >::: Basic.tests;
     "multiple buffers" >::: MultiBuffer.tests;
-    "integer oveflows" >::: NumberOverflow.tests;
+    "raising exceptions in callbacks" >::: CallbackExceptions.tests;
+    "state errors" >::: StateErrors.tests;
+    "parse errors" >::: ParseErrors.tests;
+    "integer overflows" >::: NumberOverflow.tests;
     "parser options" >::: ParserOptions.tests;
-    "raising exceptions in callbacks" >::: CallbackExceptions.tests
 ])
 
 run_test_tt ~verbose:true all_tests
