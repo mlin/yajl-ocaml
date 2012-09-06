@@ -1,3 +1,8 @@
 [submodule "upstream"]
 	path = upstream
 	url = https://github.com/lloyd/yajl.git
+  ignore = dirty
+[submodule "twt"]
+	path = twt
+	url = https://github.com/mlin/twt.git
+  ignore = dirty
