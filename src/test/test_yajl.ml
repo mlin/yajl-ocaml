@@ -110,26 +110,69 @@ module MultiBuffer = struct
     let parser = YAJL.make_parser raw_callbacks []
 
     YAJL.parse parser json_half1
-    let inter = YAJL.last_context ~t:List.rev parser
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
-      inter
+      YAJL.last_context ~t:List.rev parser
 
     YAJL.parse parser json_half2
-    let rslt = YAJL.complete_parse ~t:List.rev parser
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array;
         String "Lorem"; String "ipsum"; String "dolor"; String "sit"; String "amet";
        End_array; End_map]
-      rslt
+      YAJL.complete_parse ~t:List.rev parser
 
-  (* TODO: more elaborate multipart tests; test giving partial buffers
-      (ofs>0); test overriding context value *)
+  let override_context_value () =
+    let parser = YAJL.make_parser raw_callbacks []
+
+    YAJL.parse parser json_half1
+
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
+      YAJL.last_context ~t:List.rev parser
+
+    YAJL.parse ~context:[String "foo"] parser json_half2
+
+    assert_equal ~printer:dump
+      [String "foo"; String "dolor"; String "sit"; String "amet"; End_array; End_map]
+      YAJL.last_context ~t:List.rev parser
+
+    assert_equal ~printer:dump
+      [String "bar"]
+      YAJL.complete_parse ~context:[String "bar"] ~t:List.rev parser
+
+  let partial_buffers () =
+    let parser = YAJL.make_parser raw_callbacks []
+
+    List.iter
+      fun bogus -> assert_raises (Invalid_argument "YAJL.parse: ofs") (fun () -> YAJL.parse parser json_half1 ~ofs:bogus)
+      [-1; String.length json_half1]
+
+    List.iter
+      fun (ofs,len) -> assert_raises (Invalid_argument "YAJL.parse: len") (fun () -> YAJL.parse parser json_half1 ~ofs ~len)
+      [(0,-1); (0,String.length json_half1 + 1); (1,String.length json_half1 + 2)]
+
+    YAJL.parse parser ("0123456789" ^ json_half1) ~ofs:10
+
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
+      YAJL.last_context ~t:List.rev parser
+
+    YAJL.parse parser ("0123456789" ^ json_half2 ^ "0123456789") ~ofs:10 ~len:(String.length json_half2)
+
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; Start_array;
+        String "Lorem"; String "ipsum"; String "dolor"; String "sit"; String "amet";
+       End_array; End_map]
+      YAJL.complete_parse ~t:List.rev parser
+
+  (* TODO: more elaborate multipart tests *)
 
   let tests = [
-    "two halves" >:: halves
+    "two halves" >:: halves;
+    "override context value" >:: override_context_value;
+    "partial buffers" >:: partial_buffers
   ]
 
 module CallbackExceptions = struct
