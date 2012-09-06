@@ -50,7 +50,7 @@ module Basic = struct
   (* Basic tests with a simple JSON: make sure we get all events, and try the
      three different modes for parsing numbers *)
 
-  let json = "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\"]}"
+  let json = "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\",\"\"]}"
   let parse_json parser =
     YAJL.parse parser json
     List.rev (YAJL.complete_parse parser)
@@ -62,7 +62,7 @@ module Basic = struct
           Start_array;
             Null; Bool false; Bool true;
             Number "0"; Number "12345"; Number "3.14159"; Number "6e23";
-            String "bar";
+            String "bar"; String "";
           End_array;
        End_map]
     assert_equal ~printer:dump correct (parse_json (YAJL.make_parser raw_callbacks []))
@@ -75,7 +75,7 @@ module Basic = struct
           Start_array;
             Null; Bool false; Bool true;
             Int 0; Int 12345; Float 3.14159; Float 6e23;
-            String "bar";
+            String "bar"; String "";
           End_array;
        End_map]
     assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int_callbacks []))
@@ -87,7 +87,7 @@ module Basic = struct
           Start_array;
             Null; Bool false; Bool true;
             Int64 0L; Int64 12345L; Float 3.14159; Float 6e23;
-            String "bar";
+            String "bar"; String "";
           End_array;
        End_map]
     assert_equal ~printer:dump correct (parse_json (YAJL.make_parser int64_callbacks []))

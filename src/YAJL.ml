@@ -112,6 +112,7 @@ Callback.register "yajl_ocaml_dispatch_float"
 Callback.register "yajl_ocaml_dispatch_number"
   fun p buf ofs len ->
     try
+      assert (len>0)
       match p.callbacks.on_number with
         | `Raw_numbers f -> p.ctx <- f p.ctx buf ofs len; true
         | _ -> assert false

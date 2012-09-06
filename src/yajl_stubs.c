@@ -70,7 +70,7 @@ Otherwise, allocate a new OCaml string and copy the data into it.
 */
 #define DISPATCH_BUFFER(nm) \
   CAMLlocalN(args,4); \
-  assert(buf); assert(len>0); \
+  assert(buf); \
   args[0] = *(p->op.dsp_ctx); \
   args[3] = Val_int(len); \
   if ((unsigned char*) buf >= p->op.buf && ((unsigned char*)buf+len) <= (p->op.buf+p->op.bufsz)) { \
