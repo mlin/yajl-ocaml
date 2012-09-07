@@ -167,12 +167,28 @@ module MultiBuffer = struct
        End_array; End_map]
       YAJL.complete_parse ~t:List.rev parser
 
-  (* TODO: more elaborate multipart tests *)
+  let big_json () =
+    if Array.length Sys.argv <= 1 then printf "(skipping since a JSON filename was not passed on the command line)\n"
+    else
+      File.with_file_in Sys.argv.(1)
+        fun infile ->
+          let parser = YAJL.make_parser raw_callbacks []
+          let bytes = ref 0
+          try
+            let buf = String.create 8192
+            while true do
+              let n = IO.input infile buf 0 8192
+              YAJL.parse parser buf ~len:n
+              bytes := !bytes + n
+          with IO.No_more_input -> ()
+          IO.close_in infile
+          printf "%d bytes / %d events\n" !bytes (List.length (YAJL.complete_parse parser))
 
   let tests = [
     "two halves" >:: halves;
     "override context value" >:: override_context_value;
-    "partial buffers" >:: partial_buffers
+    "partial buffers" >:: partial_buffers;
+    "big JSON" >:: big_json
   ]
 
 module CallbackExceptions = struct
@@ -196,15 +212,24 @@ module CallbackExceptions = struct
     "interruption" >:: interruption
   ]
 
-module StateErrors = struct
-  (* TODO: test receipt of Failure errors due to calling methods at impermissible times *)
-
-  let tests = []
-
 module ParseErrors = struct
-  (* TODO: test receipt of Parse_error when using malformed JSON *)
+  let assert_parse_error f =
+    try
+      ignore (f ())
+      "no exception raised" @? false
+    with
+      | YAJL.Parse_error _ -> ()
+      | exn -> raise exn
 
-  let tests = []
+  let trivial () =
+    assert_parse_error (fun () -> YAJL.parse (YAJL.make_parser raw_callbacks []) "}")
+    let parser = YAJL.make_parser raw_callbacks []
+    YAJL.parse parser "{\"foo\": 12345, \"ba"
+    assert_parse_error (fun () -> YAJL.complete_parse parser)
+
+  let tests = [
+    "trivial" >:: trivial
+  ]
 
 module NumberOverflow = struct
   (* Test receipt of Parse_error due to unrepresentable JSON numbers *)
@@ -284,15 +309,88 @@ module NumberOverflow = struct
   ]
 
 module ParserOptions = struct
-  (* TODO: test setting parser options *)
+  (* Test setting parser options *)
 
-  let tests = []
+  let assert_parse_error f =
+    try
+      ignore (f ())
+      "no exception raised" @? false
+    with
+      | YAJL.Parse_error _ -> ()
+      | exn -> raise exn
+
+  let both_parsers opts =
+    let parser_off = YAJL.make_parser raw_callbacks []
+    let parser_on = YAJL.make_parser ~options:opts raw_callbacks []
+    parser_off, parser_on
+
+  let allow_comments () =
+    let json = "{\"foo\": \"bar\", /* comment */ \"baz\": 12345}"
+    let parser_off, parser_on = both_parsers [`Allow_comments]
+    assert_parse_error (fun () -> YAJL.parse parser_off json)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; String "bar"; Map_key "baz"; Number "12345"; End_map] 
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let dont_validate_strings () =
+    let json = "{\"foo\": \"\xc3\x28\"}"
+    let parser_off, parser_on = both_parsers [`Dont_validate_strings]
+    assert_parse_error (fun () -> YAJL.parse parser_off json)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; String "\xc3\x28"; End_map] 
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let allow_trailing_garbage () =
+    let json = "{}garbage"
+    let parser_off, parser_on = both_parsers [`Allow_trailing_garbage]
+    assert_parse_error (fun () -> YAJL.parse parser_off json)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; End_map] 
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let allow_multiple_values () =
+    let json = "{\"foo\": \"bar\"}{\"baz\": 12345}"
+    let parser_off, parser_on = both_parsers [`Allow_multiple_values]
+    assert_parse_error (fun () -> YAJL.parse parser_off json)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; String "bar"; End_map; Start_map; Map_key "baz"; Number "12345"; End_map] 
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let allow_partial_values () =
+    let json = "{\"foo\": \"bar\", \"baz\": "
+    let parser_off, parser_on = both_parsers [`Allow_partial_values]
+    assert_parse_error (fun () -> YAJL.parse parser_off json; YAJL.complete_parse parser_off)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; String "bar"; Map_key "baz"] 
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let altogether () =
+    let json = "{\"foo\": \"bar\"}/*comment*/{\"\xc3\x28\": \"\xf0\x90\x28\xbc\""
+    let parser_off, parser_on = both_parsers [`Allow_comments; `Dont_validate_strings; `Allow_multiple_values; `Allow_partial_values]
+    assert_parse_error (fun () -> YAJL.parse parser_off json; YAJL.complete_parse parser_off)
+    YAJL.parse parser_on json
+    assert_equal ~printer:dump
+      [Start_map; Map_key "foo"; String "bar"; End_map; Start_map; Map_key "\xc3\x28"; String "\xf0\x90\x28\xbc"]
+      YAJL.complete_parse ~t:List.rev parser_on
+
+  let tests = [
+    "allow comments" >:: allow_comments;
+    "don't validate strings" >:: dont_validate_strings;
+    "allow trailing garbage" >:: allow_trailing_garbage;
+    "allow multiple values" >:: allow_multiple_values;
+    "allow partial values" >:: allow_partial_values;
+    "altogether" >:: altogether
+  ]
 
 let all_tests = ("yajl-ocaml tests" >::: [
     "basic" >::: Basic.tests;
     "multiple buffers" >::: MultiBuffer.tests;
     "raising exceptions in callbacks" >::: CallbackExceptions.tests;
-    "state errors" >::: StateErrors.tests;
     "parse errors" >::: ParseErrors.tests;
     "integer overflows" >::: NumberOverflow.tests;
     "parser options" >::: ParserOptions.tests;

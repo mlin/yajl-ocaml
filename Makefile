@@ -11,9 +11,9 @@ install: all
 	ocamlfind remove yajl || true
 	cd src/_build && ocamlfind install yajl $(YAJL_AR) libyajl_stubs.a yajl.a YAJL.cmi yajl.cma yajl.cmxa YAJL.mli ../META
 
-test: install
+test: install sample.json
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
-	src/test_yajl.native
+	src/test_yajl.native $(CURDIR)/sample.json
 
 $(YAJL_PREFIX)/lib/libyajl_s.a: .gitmodules upstream/CMakeLists.txt
 	cd upstream && ./configure --prefix $(YAJL_PREFIX) && make install
@@ -32,6 +32,11 @@ git-submodule-incantations:
 	git submodule sync
 	git submodule update
 
+sample.json:
+	wget http://json-test-suite.googlecode.com/files/sample.zip
+	unzip sample.zip sample.json
+	rm sample.zip
+
 tidy:
 	cd src && ocamlbuild -clean
 
@@ -39,3 +44,4 @@ clean: tidy
 	cd upstream && (make clean || true)
 	cd twt && (make clean || true)
 	rm -rf upstream/local
+	rm -f sample.json
