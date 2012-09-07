@@ -1,18 +1,21 @@
 (** {1 YAJL callbacks} 
 
 We begin with a direct binding to the YAJL callback-based API, in which the
-parser invokes your callbacks for each JSON 'event' and it is mainly up to you
+parser invokes your callbacks for each JSON 'event' and it's mainly up to you
 to maintain state and/or build up a data structure based on the sequence of
 events. All callbacks are provided with an arbitrary "context value" of type
 ['a] and return another value of type ['a], which is provided to the next
-callback and ultimately returned to the caller of the parser.
+callback and so on, until a final context value is returned to the caller of
+the parser.
 
 Strings are always provided to the callbacks in [string, offset, length] form
-where it is only permissible to read the specified range.
+where it is only permissible to read the specified range. When possible, the
+parser will give your string callbacks a region within the same buffer you
+provide it, in order to minimize copying of the data. It's up to you to make a
+copy using [String.sub] if desired.
 
 Callbacks can cancel parsing by raising any exception (which will be re-raised
 to the parser's caller). The parser cannot be used after such an exception.
-
 *)
 
 (** Integers can be parsed either as [int]s or [Int64.t]s. An integer JSON
@@ -26,7 +29,9 @@ cause the parser to raise [Parse_error].*)
 type 'a float_callback = 'a -> float -> 'a
 
 (** JSON number callbacks: either a tuple of int and float callbacks, or
-request unparsed numbers *)
+request unparsed numbers (which will avoid the aforementioned "unrepresentable
+number" exceptions, but leave it up to you to choose an appropriate
+representation) *)
 type 'a number_callbacks = [
 	  `Parse_numbers of (('a int_callback)*('a float_callback))
 	| `Raw_numbers of ('a -> string -> int -> int -> 'a)
@@ -69,8 +74,14 @@ from the previous [parse].
 parse operation, instead of the last-returned value.
 @param ofs offset into [buf] at which to begin reading data (default: 0)
 @param len amount of data to read (default: [String.length buf - ofs])
- *)
-val parse : ?context:'a -> ?ofs:int -> ?len:int -> 'a parser -> string -> unit
+@param pinned {b Unsafe!} Set this to true if you can guarantee that the OCaml
+garbage collector will not relocate the in-memory representation of [buf]
+during the parse operation (including the execution of your callbacks), e.g.
+it resides in memory managed by the [Ancient] or [Netsys_mem] libraries. In
+that case, we do not have to make an extra copy of the data for YAJL to work
+on it. YOU CANNOT USE THIS WITH ANY [string] ALLOCATED IN THE USUAL WAY!!!!
+*)
+val parse : ?context:'a -> ?ofs:int -> ?len:int -> ?pinned:bool -> 'a parser -> string -> unit
 
 (** Complete the parsing of any remaining buffers once there is no more data
 to be received, and return the final context value.

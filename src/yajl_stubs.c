@@ -12,9 +12,11 @@
 #include <caml/memory.h>
 #include <caml/custom.h>
 
-/* Internal context for an in-progress prase operation */
+/* Internal context for an in-progress parse operation */
 struct op_context {
-  value *dsp_ctx;       /* the OCaml dispatch_context for the operation */
+  value *dsp_ctx;       /* the OCaml context value to give the OCaml dispatch callbacks during
+                           the operation (not the same as the user's context value, which is
+                           inside it) */
 
   value *orig_buf;      /* OCaml buffer (string) given to the parser */
   size_t orig_buf_ofs;  /* offset into orig_buf given to the parser */
@@ -63,12 +65,10 @@ exception in such a case.
   CAMLreturnT(int,Bool_val(ans));
 
 /*
-More elaborate logic for when we have to pass along a buffer (in string+offset+length form):
+More elaborate logic for when we have to pass along a buffer (in string,offset,length form):
 If YAJL has given us data within p->buf, give OCaml the corresponding region within p->orig_buf.
 Otherwise, allocate a new OCaml string and copy the data into it.
 (see how these are initialized in yajl_ocaml_parse, below)
-
-TODO: optimization for empty string
 */
 #define DISPATCH_BUFFER(nm) \
   CAMLlocalN(args,4); \
@@ -78,8 +78,7 @@ TODO: optimization for empty string
   if ((unsigned char*) buf >= p->op.buf && ((unsigned char*)buf+len) <= (p->op.buf+p->op.bufsz)) { \
     args[1] = *(p->op.orig_buf); \
     args[2] = Val_int(p->op.orig_buf_ofs + ((unsigned char*)buf-p->op.buf)); \
-  } \
-  else { \
+  } else { \
     args[1] = caml_alloc_string(len); \
     memcpy(String_val(args[1]), buf, len); \
     args[2] = Val_int(0); \
@@ -233,8 +232,7 @@ value yajl_ocaml_free(value box) {
   struct parser *p = Parser_val(box);
   assert(p != NULL);
   yajl_free(p->yajl);
-  if (p->op.buf) { free(p->op.buf); }
-  memset(p, 0, sizeof(struct parser));
+  assert (!p->op.buf);
   free(p);
 
   CAMLreturn(Val_unit);
@@ -251,28 +249,35 @@ value yajl_ocaml_config(value box, value opt, value val) {
   CAMLreturn(Val_unit);
 }
 
-value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len) {
+value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len, value pinned) {
   CAMLparam5(box, dsp, buf, ofs, len);
+  CAMLxparam1(pinned);
   unsigned char *errmsg = NULL;
   CAMLlocal1(camlerr);
   struct parser *p = Parser_val(box);
 
-  /* set the OCaml dispatch_context value for this operation. The C callbacks will pass this back
-     to the OCaml dispatch functions. */
-  if (p->op.dsp_ctx) { caml_failwith("Nested invocation of YAJL.parse"); }
-  p->op.dsp_ctx = &dsp;
+  p->op.bufsz = (size_t) Long_val(len);
+  if (!Bool_val(pinned)) {
+    /* Since the OCaml GC is liable to move String_val(buf) around during the operation, we
+       cannot just give that to YAJL. Instead we must make our own copy of it. */
+    p->op.buf = (unsigned char*) malloc(p->op.bufsz);
+    memcpy(p->op.buf, (String_val(buf)+Int_val(ofs)), p->op.bufsz);
+  } else {
+    /* The caller promises that the GC won't move buf around during the operation (they
+       somehow allocated it outside of the OCaml heap), so we don't have to copy it. */
+    p->op.buf = (unsigned char*) String_val(buf) + Int_val(ofs);
+  }
 
-  /* Since the OCaml GC is liable to move String_val(buf) around during the operation, we cannot
-     just give that to YAJL. Instead we must make our own copy of it.
-     TODO: investigate if there's a way to "pin" buf in-memory so that we don't have to make this
-           copy. */
-  p->op.bufsz = (size_t) Int_val(len);
-  p->op.buf = (unsigned char*) malloc(p->op.bufsz);
-  memcpy(p->op.buf, (String_val(buf)+Int_val(ofs)), p->op.bufsz);
   /* Also store a pointer to the buf value for this operation, which the above C callbacks can
      reference in order to avoid further, unnecessary copying of the data */
   p->op.orig_buf = &buf;
   p->op.orig_buf_ofs = Int_val(ofs);
+
+  /* set the OCaml context value for this operation (which is actually the
+     OCaml representation of the parser). The C callbacks will pass this back
+     to the OCaml dispatch functions. */
+  if (p->op.dsp_ctx) { caml_failwith("Nested invocation of YAJL.parse"); }
+  p->op.dsp_ctx = &dsp;
 
   /* let YAJL do its thing */
   switch(yajl_parse(p->yajl, p->op.buf, p->op.bufsz)) {
@@ -290,7 +295,9 @@ value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len) {
   }
 
   /* clean up and raise an OCaml exception for any parser error */
-  free(p->op.buf);
+  if (!Bool_val(pinned)) {
+    free(p->op.buf);
+  }
   memset(&(p->op), 0, sizeof(struct op_context));
 
   if (errmsg) {
@@ -301,6 +308,11 @@ value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len) {
   }
 
   CAMLreturn(Val_unit);
+}
+
+value yajl_ocaml_parse_byte(value *args, int n) {
+  assert(n == 6);
+  return yajl_ocaml_parse(args[0], args[1], args[2], args[3], args[4], args[5]);
 }
 
 value yajl_ocaml_complete_parse(value box, value dsp) {

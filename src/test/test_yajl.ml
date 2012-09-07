@@ -182,7 +182,7 @@ module MultiBuffer = struct
               bytes := !bytes + n
           with IO.No_more_input -> ()
           IO.close_in infile
-          printf "%d bytes / %d events\n" !bytes (List.length (YAJL.complete_parse parser))
+          assert_equal ~printer:string_of_int 5276 (List.length (YAJL.complete_parse parser))
 
   let tests = [
     "two halves" >:: halves;
@@ -387,6 +387,16 @@ module ParserOptions = struct
     "altogether" >:: altogether
   ]
 
+module PinnedBuffers = struct
+  (* TODO: test calling parse with ~pinned:true *)
+
+  let tests = []
+
+module ParserGC = struct
+  (* TODO: test garbage-collection of parser *)
+
+  let tests = []
+
 let all_tests = ("yajl-ocaml tests" >::: [
     "basic" >::: Basic.tests;
     "multiple buffers" >::: MultiBuffer.tests;
@@ -394,6 +404,8 @@ let all_tests = ("yajl-ocaml tests" >::: [
     "parse errors" >::: ParseErrors.tests;
     "integer overflows" >::: NumberOverflow.tests;
     "parser options" >::: ParserOptions.tests;
+    "pinned buffers" >::: PinnedBuffers.tests;
+    "parser garbage collection" >::: ParserGC.tests
 ])
 
 run_test_tt ~verbose:true all_tests

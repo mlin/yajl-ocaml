@@ -133,9 +133,9 @@ Callback.register "yajl_ocaml_dispatch_start_array"
 Callback.register "yajl_ocaml_dispatch_end_array"
   fun p -> try p.ctx <- p.callbacks.on_end_array p.ctx; true with exn -> p.state <- Exception exn; false
 
-external yajl_ocaml_parse : 'a c_parser -> 'a parser -> string -> int -> int -> unit = "yajl_ocaml_parse"
+external yajl_ocaml_parse : 'a c_parser -> 'a parser -> string -> int -> int -> bool -> unit = "yajl_ocaml_parse_byte" "yajl_ocaml_parse"
 
-let parse ?context ?(ofs=0) ?len parser buf =
+let parse ?context ?(ofs=0) ?len ?(pinned=false) parser buf =
   if (ofs < 0 || ofs > String.length buf - 1) then invalid_arg "YAJL.parse: ofs"
   let maxlen = String.length buf - ofs
   let len = match len with
@@ -156,7 +156,7 @@ let parse ?context ?(ofs=0) ?len parser buf =
   if len > 0 then
     (* let C stubs and YAJL do their thing *)
     parser.state <- Parsing
-    yajl_ocaml_parse parser.c_parser parser buf ofs len
+    yajl_ocaml_parse parser.c_parser parser buf ofs len pinned
 
     (* re-raise any exception raised by the user's callbacks *)
     match parser.state with
