@@ -3,3 +3,4 @@ src/_build/
 src/test_yajl.native
 src/*.byte
 sample.json
+.DS_Store

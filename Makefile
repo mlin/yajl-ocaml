@@ -11,6 +11,9 @@ install: all
 	ocamlfind remove yajl || true
 	cd src/_build && ocamlfind install yajl $(YAJL_AR) libyajl_stubs.a yajl.a YAJL.cmi yajl.cma yajl.cmxa YAJL.mli ../META
 
+doc:
+	cd src && ocamlbuild -use-ocamlfind yajl.docdir/index.html
+
 test: install sample.json
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
 	src/test_yajl.native $(CURDIR)/sample.json
