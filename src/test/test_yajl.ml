@@ -113,7 +113,7 @@ module MultiBuffer = struct
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
-      YAJL.last_context ~t:List.rev parser
+      YAJL.context ~t:List.rev parser
 
     YAJL.parse parser json_half2
 
@@ -130,13 +130,13 @@ module MultiBuffer = struct
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
-      YAJL.last_context ~t:List.rev parser
+      YAJL.context ~t:List.rev parser
 
     YAJL.parse ~context:[String "foo"] parser json_half2
 
     assert_equal ~printer:dump
       [String "foo"; String "dolor"; String "sit"; String "amet"; End_array; End_map]
-      YAJL.last_context ~t:List.rev parser
+      YAJL.context ~t:List.rev parser
 
     assert_equal ~printer:dump
       [String "bar"]
@@ -157,7 +157,7 @@ module MultiBuffer = struct
 
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; String "Lorem"; String "ipsum"]
-      YAJL.last_context ~t:List.rev parser
+      YAJL.context ~t:List.rev parser
 
     YAJL.parse parser ("0123456789" ^ json_half2 ^ "0123456789") ~ofs:10 ~len:(String.length json_half2)
 
@@ -205,7 +205,7 @@ module CallbackExceptions = struct
     assert_raises The_exception (fun () -> YAJL.parse parser "{\"foo\": [1,2,null,3,4]}")
     assert_equal ~printer:dump
       [Start_map; Map_key "foo"; Start_array; Number "1"; Number "2"]
-      YAJL.last_context ~t:List.rev parser
+      YAJL.context ~t:List.rev parser
 
   let tests = [
     "trivial" >:: trivial;

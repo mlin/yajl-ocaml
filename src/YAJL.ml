@@ -189,4 +189,4 @@ let complete_parse ?context ?(t=identity) parser =
     | Exception exn -> raise exn
     | _ -> assert false
 
-let last_context ?(t=identity) { ctx } = t ctx
+let context ?(t=identity) { ctx } = t ctx

@@ -4,3 +4,4 @@ src/test_yajl.native
 src/*.byte
 sample.json
 .DS_Store
+src/yajl.docdir

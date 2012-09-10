@@ -13,6 +13,7 @@ install: all
 
 doc: twt/ocaml+twt
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind yajl.docdir/index.html
+	cp src/ocamldoc_style.css src/_build/yajl.docdir/style.css
 
 test: install sample.json
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
