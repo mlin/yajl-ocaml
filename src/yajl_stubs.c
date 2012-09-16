@@ -4,6 +4,7 @@
 
 #include <yajl/yajl_common.h>
 #include <yajl/yajl_parse.h>
+#include <yajl/yajl_gen.h>
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -347,4 +348,207 @@ value yajl_ocaml_complete_parse(value box, value dsp) {
   }
 
   CAMLreturn(Val_unit);
+}
+
+
+/* GENERATOR STUBS */
+
+
+struct gen {
+  yajl_gen yajl;
+  unsigned char *indent_string;
+};
+
+
+static struct custom_operations ocaml_yajl_gen_ops = {
+  "ocaml_yajl_gen",
+  custom_finalize_default,
+  custom_compare_default,
+  custom_hash_default,
+  custom_serialize_default,
+  custom_deserialize_default
+};
+
+#define Gen_val(v) (* ((struct gen **) Data_custom_val(v)))
+
+value yajl_ocaml_make_gen() {
+  CAMLparam0();
+  CAMLlocal1(box);
+
+  /* allocate gen struct */
+  struct gen *p = malloc(sizeof(struct gen));
+  memset(p, 0, sizeof(struct gen));
+
+  /* instantiate YAJL generator */
+  p->yajl = yajl_gen_alloc(NULL);
+  
+  /* allocate a value box for the parser struct and return it */
+  box = alloc_custom(&ocaml_yajl_gen_ops, sizeof(struct gen *), 0, 1);
+  Gen_val(box) = p;
+  CAMLreturn(box);
+}
+
+value yajl_ocaml_gen_config(value box, value opt, value val) {
+  CAMLparam3(box, opt, val);
+  struct gen *p = Gen_val(box);
+
+  if (!yajl_gen_config(p->yajl, Int_val(opt), Int_val(val))) {
+    caml_failwith("YAJL.make_gen: error setting option(s)");
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+value yajl_ocaml_gen_config_indent_string(value box, value string) {
+  CAMLparam2(box, string);
+  struct gen *p = Gen_val(box);
+
+  if (p->indent_string) {
+    caml_failwith("YAJL.make_gen: multiple `Beautify options");
+  }
+
+  p->indent_string = malloc(caml_string_length(string)+1);
+  p->indent_string[caml_string_length(string)] = 0;
+  memcpy(p->indent_string, String_val(string), caml_string_length(string));
+
+  if (!yajl_gen_config(p->yajl, yajl_gen_indent_string, p->indent_string)) {
+    caml_failwith("YAJL.make_gen: error setting indent string");
+  }
+
+  CAMLreturn(Val_unit);
+}
+
+value yajl_ocaml_gen_free(value box) {
+  CAMLparam1(box);
+
+  struct gen *p = Gen_val(box);
+  assert(p != NULL);
+  yajl_gen_free(p->yajl);
+  if (p->indent_string) {
+    free(p->indent_string);
+  }
+  free(p);
+
+  CAMLreturn(Val_unit);
+}
+
+value yajl_ocaml_gen_get_buf(value box) {
+  CAMLparam1(box);
+  CAMLlocal1(ans);
+  struct gen *p = Gen_val(box);
+  const unsigned char *buf;
+  size_t len;
+
+  switch (yajl_gen_get_buf(p->yajl, &buf, &len)) {
+  case yajl_gen_status_ok:
+    ans = caml_alloc_tuple(3);
+    Store_field(ans, 0, caml_copy_string(buf));
+    Store_field(ans, 1, Val_int(0));
+    Store_field(ans, 2, Val_int(len));
+    break;
+    /*
+      TODO: We should be able to avoid copying the generator buffer by
+      supplying YAJL with custom allocator functions that use
+      caml_alloc_string.
+    */
+  default:
+    caml_failwith("YAJL.get_gen_buf");
+  }
+
+  CAMLreturn(ans);
+}
+
+value yajl_ocaml_gen_clear(value box) {
+  CAMLparam1(box);
+  struct gen *p = Gen_val(box);
+
+  yajl_gen_clear(p->yajl);
+
+  CAMLreturn(Val_unit);
+}
+
+#define BEGIN_GEN(yajl_call) struct gen *p = Gen_val(box);\
+  switch(yajl_call) { \
+  case yajl_status_ok: break;
+
+#define END_GEN(nm) \
+  case yajl_max_depth_exceeded: \
+    caml_failwith(#nm ": max depth exceeded"); \
+    assert(0); /* should not get here */ \
+  default: \
+    caml_failwith(nm); \
+    assert(0); /* should not get here */ \
+  } \
+  CAMLreturn(Val_unit);
+
+value yajl_ocaml_gen_string(value box, value buf, value ofs, value len) {
+  CAMLparam4(box, buf, ofs, len);
+  CAMLlocal1(tuple);
+  BEGIN_GEN(yajl_gen_string(p->yajl, (unsigned char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
+  case yajl_gen_invalid_string:
+    CAMLreturn(Val_int(314159)); /* sentinel value recognized by ocaml stub */
+  END_GEN("YAJL.gen_string")
+}
+
+value yajl_ocaml_gen_int(value box, value n) {
+  CAMLparam2(box, n);
+  BEGIN_GEN(yajl_gen_integer(p->yajl, Int_val(n)))
+  END_GEN("YAJL.gen_int")
+}
+
+value yajl_ocaml_gen_int64(value box, value n) {
+  CAMLparam2(box, n);
+  BEGIN_GEN(yajl_gen_integer(p->yajl, Int64_val(n)))
+  END_GEN("YAJL.gen_int64")
+}
+
+value yajl_ocaml_gen_float(value box, value x) {
+  CAMLparam2(box, x);
+  BEGIN_GEN(yajl_gen_double(p->yajl, Double_val(x)))
+  case yajl_gen_invalid_number:
+    caml_raise_with_arg(*caml_named_value("yajl_ocaml_gen_invalid_float"), x);
+    assert(0);
+  END_GEN("YAJL.gen_float")
+}
+
+value yajl_ocaml_gen_number(value box, value buf, value ofs, value len) {
+  CAMLparam4(box, buf, ofs, len);
+  BEGIN_GEN(yajl_gen_number(p->yajl, (unsigned char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
+  END_GEN("YAJL.gen_number")
+}
+
+value yajl_ocaml_gen_null(value box) {
+  CAMLparam1(box);
+  BEGIN_GEN(yajl_gen_null(p->yajl))
+  END_GEN("YAJL.gen_null")
+}
+
+value yajl_ocaml_gen_bool(value box, value b) {
+  CAMLparam2(box, b);
+  BEGIN_GEN(yajl_gen_bool(p->yajl, Bool_val(b)))
+  END_GEN("YAJL.gen_bool")
+}
+
+value yajl_ocaml_gen_start_map(value box) {
+  CAMLparam1(box);
+  BEGIN_GEN(yajl_gen_map_open(p->yajl))
+  END_GEN("YAJL.gen_start_map")
+}
+
+value yajl_ocaml_gen_end_map(value box) {
+  CAMLparam1(box);
+  BEGIN_GEN(yajl_gen_map_close(p->yajl))
+  END_GEN("YAJL.gen_end_map")
+}
+
+value yajl_ocaml_gen_start_array(value box) {
+  CAMLparam1(box);
+  BEGIN_GEN(yajl_gen_array_open(p->yajl))
+  END_GEN("YAJL.gen_start_array")
+}
+
+value yajl_ocaml_gen_end_array(value box) {
+  CAMLparam1(box);
+  BEGIN_GEN(yajl_gen_array_close(p->yajl))
+  END_GEN("YAJL.gen_end_array")
 }

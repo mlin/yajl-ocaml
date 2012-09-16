@@ -190,3 +190,79 @@ let complete_parse ?context ?(t=identity) parser =
     | _ -> assert false
 
 let context ?(t=identity) { ctx } = t ctx
+
+
+
+type gen_option = [
+    `Beautify
+  | `Beautify_with of string
+  | `Validate_UTF8
+  | `Escape_solidus
+]
+
+type c_gen
+type gen = c_gen
+
+external yajl_ocaml_make_gen : unit -> c_gen = "yajl_ocaml_make_gen"
+external yajl_ocaml_gen_free : c_gen -> unit = "yajl_ocaml_gen_free"
+external yajl_ocaml_gen_config : c_gen -> int -> int -> unit = "yajl_ocaml_gen_config"
+external yajl_ocaml_gen_config_indent_string : c_gen -> string -> unit = "yajl_ocaml_gen_config_indent_string"
+let make_gen ?(options=[]) () =
+  let c_gen = yajl_ocaml_make_gen ()
+
+  Gc.finalise yajl_ocaml_gen_free c_gen
+
+  List.iter
+    function
+      | `Beautify -> yajl_ocaml_gen_config c_gen 1 1
+      | `Beautify_with indentation ->
+        yajl_ocaml_gen_config c_gen 1 1
+        yajl_ocaml_gen_config_indent_string c_gen indentation
+      | `Validate_UTF8 -> yajl_ocaml_gen_config c_gen 8 1
+      | `Escape_solidus -> yajl_ocaml_gen_config c_gen 16 1
+    options
+
+  c_gen
+
+external gen_get_buf : c_gen -> string*int*int = "yajl_ocaml_gen_get_buf"
+
+external gen_clear : c_gen -> unit = "yajl_ocaml_gen_clear"
+
+exception Gen_invalid_string of string*int*int
+external yajl_ocaml_gen_string : c_gen -> string -> int -> int -> int = "yajl_ocaml_gen_string"
+let gen_string ?(ofs=0) ?len c_gen buf =
+  let maxlen = String.length buf - ofs
+  let len = match len with
+    | None -> maxlen
+    | Some k when k >= 0 && k <= maxlen -> k
+    | _ -> invalid_arg "YAJL.gen_string: len"
+  if (ofs < 0 || ofs + len > String.length buf) then invalid_arg "YAJL.gen_string: ofs"
+  match yajl_ocaml_gen_string c_gen buf ofs len with
+    | 314159 -> raise (Gen_invalid_string (buf, ofs, len))
+    | _ -> ()
+
+external gen_int : c_gen -> int -> unit = "yajl_ocaml_gen_int"
+
+external gen_int64 : c_gen -> Int64.t -> unit = "yajl_ocaml_gen_int64"
+
+external gen_float : c_gen -> float -> unit = "yajl_ocaml_gen_float"
+
+exception Gen_invalid_float of float
+Callback.register_exception "yajl_ocaml_gen_invalid_float" (Gen_invalid_float nan)
+
+external yajl_ocaml_gen_number : c_gen -> string -> int -> int -> unit = "yajl_ocaml_gen_number"
+let gen_number ?(ofs=0) ?len c_gen buf =
+  if (ofs < 0 || ofs > String.length buf - 1) then invalid_arg "YAJL.gen_number: ofs"
+  let maxlen = String.length buf - ofs
+  let len = match len with
+    | None -> maxlen
+    | Some k when k >= 0 && k <= maxlen -> k
+    | _ -> invalid_arg "YAJL.gen_number: len"
+  yajl_ocaml_gen_number c_gen buf ofs len
+
+external gen_null : c_gen -> unit = "yajl_ocaml_gen_null"
+external gen_bool : c_gen -> bool -> unit = "yajl_ocaml_gen_bool"
+external gen_start_map : c_gen -> unit = "yajl_ocaml_gen_start_map"
+external gen_end_map : c_gen -> unit = "yajl_ocaml_gen_end_map"
+external gen_start_array : c_gen -> unit = "yajl_ocaml_gen_start_array"
+external gen_end_array : c_gen -> unit = "yajl_ocaml_gen_end_array"

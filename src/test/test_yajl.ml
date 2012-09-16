@@ -397,6 +397,118 @@ module ParserGC = struct
 
   let tests = []
 
+module Gen = struct
+  let gen yajl = function
+    | Null -> YAJL.gen_null yajl
+    | Bool b -> YAJL.gen_bool yajl b
+    | Int n -> YAJL.gen_int yajl n
+    | Int64 n -> YAJL.gen_int64 yajl n
+    | Float x -> YAJL.gen_float yajl x
+    | Number buf -> YAJL.gen_number yajl buf
+    | String buf -> YAJL.gen_string yajl buf
+    | Start_map -> YAJL.gen_start_map yajl
+    | Map_key buf -> YAJL.gen_string yajl buf
+    | End_map -> YAJL.gen_end_map yajl
+    | Start_array -> YAJL.gen_start_array yajl
+    | End_array -> YAJL.gen_end_array yajl
+
+  let test_gen ?options ?parser_options which_callbacks json =
+    let events =
+      let parser = YAJL.make_parser ?options:parser_options which_callbacks []
+      YAJL.parse parser json
+      List.rev (YAJL.complete_parse parser)
+
+    let gen_json =
+      let yajl = YAJL.make_gen ?options ()
+      List.iter (gen yajl) events
+      let (buf,ofs,len) = YAJL.gen_get_buf yajl
+      String.sub buf ofs len
+
+    (*printf "%s\n" gen_json*)
+
+    let events2 =
+      let parser2 = YAJL.make_parser ?options:parser_options which_callbacks []
+      YAJL.parse parser2 gen_json
+      List.rev (YAJL.complete_parse parser2)
+
+    assert_equal ~printer:dump events events2
+
+  let basic_json = "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\",\"\"]}"
+  let basic_int () = test_gen int_callbacks basic_json
+  let basic_int64 () = test_gen int64_callbacks basic_json
+  let basic_raw () = test_gen raw_callbacks basic_json
+
+  let beautify_default () = test_gen ~options:[`Beautify] int_callbacks basic_json
+  let beautify_custom () = test_gen ~options:[`Beautify_with "                 "] int_callbacks basic_json
+
+  let validate_utf8 () =
+    let bogus = "{\"foo\": \"ok\xc3\x28\"}"
+    test_gen ~parser_options:[`Dont_validate_strings] int_callbacks bogus
+    try
+      test_gen ~options:[`Validate_UTF8] ~parser_options:[`Dont_validate_strings] int_callbacks bogus
+      assert false
+    with
+      | YAJL.Gen_invalid_string (buf,ofs,len) ->
+        (* printf "%s %d %d\n" buf ofs len *)
+        assert_equal "ok\xc3\x28" (String.sub buf ofs len)
+      | _ -> assert false
+
+  let invalid_float () =
+    let yajl = YAJL.make_gen ()
+    gen yajl Start_map; gen yajl (Map_key "string")
+    assert_raises (YAJL.Gen_invalid_float infinity) (fun () -> gen yajl (Float infinity))
+
+  let tests = [
+    "basic (int)" >:: basic_int;
+    "basic (int64)" >:: basic_int64;
+    "basic (raw)" >:: basic_raw;
+    "Beautify" >:: beautify_default;
+    "Beautify (custom indentation)" >:: beautify_custom;
+    "Validate_UTF8" >:: validate_utf8;
+    "Invalid float" >:: invalid_float;
+  ]
+
+(*
+FIXME: Streaming integration test is disabled because the big sample JSON
+actually exceeds the YAJL generator's maximum array nesting level. To run the
+test, change YAJL_MAX_DEPTH in ../../upstream/src/api/yajl_common.h to 512 and
+uncomment the appropriate line in all_tests, below.
+*)
+let streaming_integration_test () =
+    if Array.length Sys.argv <= 1 then printf "(skipping since a JSON filename was not passed on the command line)\n"
+    else
+      File.with_file_in Sys.argv.(1)
+        fun infile ->
+          printf "here0\n"; flush stdout
+          (* get the big JSON as an event list *)
+          let json = IO.read_all infile
+          IO.close_in infile
+          let parser = YAJL.make_parser raw_callbacks []
+          YAJL.parse parser json
+          let events = YAJL.complete_parse ~t:List.rev parser
+
+          printf "here1\n"; flush stdout
+          (* regenerate the JSON in a streaming manner (100 events at a time) *)
+          let yajl = YAJL.make_gen ()
+          let rec stream_json events bufs =
+            if events = [] then List.rev(bufs)
+            else
+              let batch, rest = List.split_at (min 100 (List.length events)) events
+              List.iter (Gen.gen yajl) batch
+              let (buf,ofs,len) = YAJL.gen_get_buf yajl
+              let bufcpy = String.sub buf ofs len
+              YAJL.gen_clear yajl
+              stream_json rest (bufcpy :: bufs)
+          let gen_bufs = stream_json events []
+
+          printf "here2\n"; flush stdout
+          (* stream the generated buffers back through a parser *)
+          let parser2 = YAJL.make_parser raw_callbacks []
+          gen_bufs |> List.iter (YAJL.parse parser2)
+
+          (* confirm we get the same event list back *)
+          assert_equal events (YAJL.complete_parse ~t:List.rev parser2)
+
 let all_tests = ("yajl-ocaml tests" >::: [
     "basic" >::: Basic.tests;
     "multiple buffers" >::: MultiBuffer.tests;
@@ -405,7 +517,9 @@ let all_tests = ("yajl-ocaml tests" >::: [
     "integer overflows" >::: NumberOverflow.tests;
     "parser options" >::: ParserOptions.tests;
     "pinned buffers" >::: PinnedBuffers.tests;
-    "parser garbage collection" >::: ParserGC.tests
+    "parser garbage collection" >::: ParserGC.tests;
+    "generator tests" >::: Gen.tests;
+(*    "streaming integration test" >:: streaming_integration_test *)
 ])
 
 run_test_tt ~verbose:true all_tests

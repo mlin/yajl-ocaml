@@ -2,7 +2,7 @@
 
 @see < http://lloyd.github.com/yajl/ > YAJL home page *)
 
-(** {1 YAJL callbacks} 
+(** {2 YAJL callbacks} 
 
 As a streaming parser, YAJL invokes your callbacks for each JSON 'event' and
 it's mainly up to you to maintain state and/or build up a data structure based
@@ -57,7 +57,7 @@ type 'a callbacks = {
 	on_end_array : 'a -> 'a
 }
 
-(** {1 Callback parser} *)
+(** {2 Callback JSON parser} *)
 
 (** The grammar recognized by the parser can be relaxed using these options. *)
 type parser_options = [
@@ -122,3 +122,91 @@ to retrieve an intermediate result between parsing buffers, or following a
 @param t as in [complete_parse]
 *)
 val context : ?t:('a -> 'a) -> 'a parser -> 'a
+
+(** {2 JSON generator} *)
+
+(** generator options:
+- [`Beautify]: generate indented output, using the default indentation (four spaces)
+- [`Beautify_with]: generate indented output using the given string as indentation. The string must contain only whitespace characaters.
+- [`Validate_UTF8]: perform UTF-8 validation on string outputs
+- [`Escape_solidus]: escape forward-slashes in JSON text (convenience for pasting JSON into HTML)
+*)
+type gen_option = [
+		`Beautify
+	| `Beautify_with of string
+	| `Validate_UTF8 
+	| `Escape_solidus
+]
+
+type gen
+
+(** make a new generator. *)
+val make_gen : ?options:(gen_option list) -> unit -> gen
+
+
+(** Retrieve the current buffer of generated JSON, as a
+    [(buffer,offset,length)] tuple, after you have called the generator functions
+    (below). *)
+val gen_get_buf : gen -> string*int*int
+
+(** Clear the current buffer of generated JSON. To generate a very large JSON
+    without keeping it all in memory, you would periodically get a chunk of
+    generated JSON text using [gen_get_buf], call [gen_clear] to clear out the
+    buffer for the next chunk, and then continue calling the generator functions.
+
+    {b Caution: } calling [gen_clear] invalidates any [(buffer,offset,length)]
+    tuple previously returned by [gen_get_buf]. If you need to keep that data
+    around, make a copy using [String.sub] first.
+*)
+val gen_clear : gen -> unit
+
+(** {b JSON generator functions}
+
+In general, the generator functions can raise [Failure] for semantic errors
+such as attempting to generate a non-string value when a map key is expected
+in the generated JSON. Specifically, [Failure] is raised for these status
+codes defined in the {{: https://github.com/lloyd/yajl/blob/master/src/api/yajl_gen.h } YAJL API}:
+- [yajl_gen_keys_must_be_strings]
+- [yajl_max_depth_exceeded]
+- [yajl_gen_in_error_state]
+- [yajl_gen_generation_complete]
+
+A few other errors have specific exceptions defined below.
+
+{b Caution:} YAJL itself does only minimal validation of the sequence of
+generator function calls; for example, it may not detect if you invoke
+[gen_end_array] when you are not in an array. The OCaml bindings perform no
+additional validation.
+*)
+
+(** Generate either a map key or a string value, depending on the generator state. 
+
+@param ofs offset into the buffer [buf] at which to begin reading data (default: [0])
+@param len amount of data to read (default: [String.length buf - ofs])
+*)
+val gen_string : ?ofs:int -> ?len:int -> gen -> string -> unit
+
+(** raised by [gen_string] when the [`Validate_UTF8] option is active and
+    validation of your string fails *)
+exception Gen_invalid_string of string*int*int
+
+val gen_int : gen -> int -> unit
+val gen_int64 : gen -> Int64.t -> unit
+
+val gen_float : gen -> float -> unit
+
+(** [gen_float] raises [Gen_invalid_float] if the number is not representable
+    as JSON ([nan], [infinity], or [neg_infinity]) *)
+exception Gen_invalid_float of float
+
+(** generate a number from a raw string representation. YAJL does not validate the contents. *)
+val gen_number : ?ofs:int -> ?len:int -> gen -> string -> unit (* TODO: YAJL docs are unclear as to whether numbers are validated *)
+
+val gen_null : gen -> unit
+val gen_bool : gen -> bool -> unit
+
+val gen_start_map : gen -> unit
+val gen_end_map : gen -> unit
+val gen_start_array : gen -> unit
+val gen_end_array : gen -> unit
+
