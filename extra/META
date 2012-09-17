@@ -1,0 +1,5 @@
+version = "0.0.1"
+description = "convenient JSON representation on top of yajl-ocaml"
+archive(byte) = "JSON.cma"
+archive(native) = "JSON.cmxa"
+requires = "yajl,batteries"

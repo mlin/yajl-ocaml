@@ -1,5 +1,5 @@
 default: all
-.PHONY: default all test git-submodule-incantations tidy clean
+.PHONY: default all install doc test extra install-extra git-submodule-incantations tidy clean
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
@@ -18,6 +18,17 @@ doc: twt/ocaml+twt
 test: install sample.json
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
 	src/test_yajl.native $(CURDIR)/sample.json
+
+extra: install
+	cd extra && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind JSON.cmxa JSON.cma
+
+install-extra: extra
+	ocamlfind remove JSON || true
+	cd extra/_build && ocamlfind install JSON JSON.a JSON.cmi JSON.cma JSON.cmxa JSON.mli ../META
+
+doc-extra: twt/ocaml+twt
+	cd extra && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind JSON.docdir/index.html
+	cp src/ocamldoc_style.css extra/_build/JSON.docdir/style.css
 
 $(YAJL_PREFIX)/lib/libyajl_s.a: .gitmodules upstream/CMakeLists.txt
 	cd upstream && ./configure --prefix $(YAJL_PREFIX) && make install
@@ -43,6 +54,7 @@ sample.json:
 
 tidy:
 	cd src && ocamlbuild -clean
+	cd extra && ocamlbuild -clean
 
 clean: tidy
 	cd upstream && (make clean || true)
