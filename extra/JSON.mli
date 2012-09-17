@@ -30,7 +30,7 @@ type t = [
 ]
 
 (** Convenient operators and functions for working with the JSON representation.
-    The author tends [open JSON.Ops] in programs. *)
+    The author tends to [open JSON.Ops] in programs. *)
 module Ops : sig
 
   (** Raised when one of the operators/functions below expects a certain JSON
