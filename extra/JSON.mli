@@ -110,7 +110,8 @@ val complete_parse : intermediate YAJL.parser -> t
 
 (** {2 Stringification} *)
 
-(** Generate JSON text. *)
+(** Generate JSON text. Note that YAJL has a hardcoded limitation
+of 128 nesting levels for arrays/objects during JSON generation. *)
 val generate : ?options:(YAJL.gen_option list) -> t -> string
 
 (** Write JSON to the given filename. *)
