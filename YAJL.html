@@ -1,0 +1,274 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="YAJL" rel="Chapter" href="YAJL.html"><link title="YAJL callbacks" rel="Section" href="#2_YAJLcallbacks">
+<link title="Callback JSON parser" rel="Section" href="#2_CallbackJSONparser">
+<link title="JSON generator" rel="Section" href="#2_JSONgenerator">
+<title>YAJL</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="index.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_YAJL.html">YAJL</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> YAJL: <code class="code">sig</code> <a href="YAJL.html">..</a> <code class="code">end</code></pre>OCaml bindings for the YAJL streaming JSON parser<br>
+<b>See also</b> <a href=" http://lloyd.github.com/yajl/ ">YAJL home page</a><br>
+<hr width="100%">
+<br>
+<span id="2_YAJLcallbacks"><h2>YAJL callbacks</h2></span> 
+<p>
+
+As a streaming parser, YAJL invokes your callbacks for each JSON 'event' and
+it's mainly up to you to maintain state and/or build up a data structure based
+on the sequence of events. All callbacks are provided with an arbitrary "context
+value" of type <code class="code">'a</code> and return another value of type <code class="code">'a</code>, which is provided to
+the next callback and so on, until a final context value is returned to the
+caller of the parser.<br>
+<pre><span id="TYPEint_callback"><span class="keyword">type</span> <code class="type">'a</code> int_callback</span> = <code class="type">[ `Int of 'a -> int -> 'a | `Int64 of 'a -> Int64.t -> 'a ]</code> </pre>
+<div class="info">
+The parser can be configured to decode integers as either <code class="code">int</code>'s or
+<code class="code">Int64.t</code>'s by providing one of these callbacks. An integer JSON number outside
+the range of the chosen representation will cause the parser to raise
+<code class="code">Parse_error</code>.<br>
+</div>
+
+<pre><span id="TYPEfloat_callback"><span class="keyword">type</span> <code class="type">'a</code> float_callback</span> = <code class="type">'a -> float -> 'a</code> </pre>
+<div class="info">
+Floating-point callback. A non-integer JSON number that cannot be
+represented by a <code class="code">float</code> (as determined by the libc <code class="code">strtod</code> function) will
+cause the parser to raise <code class="code">Parse_error</code>.<br>
+</div>
+
+<pre><span id="TYPEnumber_callbacks"><span class="keyword">type</span> <code class="type">'a</code> number_callbacks</span> = <code class="type">[ `Parse_numbers of 'a <a href="YAJL.html#TYPEint_callback">int_callback</a> * 'a <a href="YAJL.html#TYPEfloat_callback">float_callback</a><br>       | `Raw_numbers of 'a -> string -> int -> int -> 'a ]</code> </pre>
+<div class="info">
+JSON number callbacks: either a tuple of int and float callbacks, or request
+the original string representation of all numbers (which avoids the
+aforementioned "unrepresentable number" exceptions by leaving it up to you to
+choose an appropriate representation).<br>
+</div>
+
+<br><code><span id="TYPEcallbacks"><span class="keyword">type</span> <code class="type">'a</code> callbacks</span> = {</code><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_null&nbsp;: <code class="type">'a -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_bool&nbsp;: <code class="type">'a -> bool -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_number&nbsp;: <code class="type">'a <a href="YAJL.html#TYPEnumber_callbacks">number_callbacks</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_string&nbsp;: <code class="type">'a -> string -> int -> int -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_start_map&nbsp;: <code class="type">'a -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_map_key&nbsp;: <code class="type">'a -> string -> int -> int -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_end_map&nbsp;: <code class="type">'a -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_start_array&nbsp;: <code class="type">'a -> 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code>on_end_array&nbsp;: <code class="type">'a -> 'a</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info">
+YAJL callbacks
+<p>
+
+Strings and map keys are provided to your callbacks in <code class="code">string offset length</code>
+form, where it is only permissible to read the specified range of the buffer.
+The buffers provided to your callbacks in this way contain UTF-8 strings,
+meaning they may encode multi-byte characters. When possible, the parser will
+give your callbacks a region within the same buffer you provided it, in order to
+minimize copying of the data. It's up to you to make a copy using <code class="code">String.sub</code>
+(or perhaps <code class="code">Batteries.Substring</code>) if desired.
+<p>
+
+Callbacks can cancel parsing by raising any exception (which will be re-raised
+to the parser's caller). The parser cannot be used after such an exception.<br>
+</div>
+
+<br>
+<span id="2_CallbackJSONparser"><h2>Callback JSON parser</h2></span><br>
+<pre><span id="TYPEparser_options"><span class="keyword">type</span> <code class="type"></code>parser_options</span> = <code class="type">[ `Allow_comments<br>       | `Allow_multiple_values<br>       | `Allow_partial_values<br>       | `Allow_trailing_garbage<br>       | `Dont_validate_strings ]</code> </pre>
+<div class="info">
+The grammar recognized by the parser can be relaxed using these options.<br>
+</div>
+
+<pre><span id="TYPEparser"><span class="keyword">type</span> <code class="type">'a</code> parser</span> </pre>
+
+<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="YAJL.html#TYPEparser_options">parser_options</a> list -><br>       'a <a href="YAJL.html#TYPEcallbacks">callbacks</a> -> 'a -> 'a <a href="YAJL.html#TYPEparser">parser</a></code></pre><div class="info">
+Make a new parser with the given callbacks and initial context value.<br>
+</div>
+<pre><span id="VALparse"><span class="keyword">val</span> parse</span> : <code class="type">?context:'a -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> 'a <a href="YAJL.html#TYPEparser">parser</a> -> string -> unit</code></pre><div class="info">
+<code class="code">parse parser buf</code> parses a chunk of data. The input JSON can be streamed by
+calling <code class="code">parse</code> multiple times as the data become available.
+<p>
+
+The first callback is applied to the initial context value provided to
+<code class="code">make_parser</code>, and its return value is passed to the second callback, and so on.
+On a second call to <code class="code">parse</code> with more data, the first callback is applied to the
+last context value returned in the previous <code class="code">parse</code>.
+<p>
+
+<code class="code">buf</code> must not be modified during the invocation of <code class="code">parse</code>, including the
+execution of your callbacks. However, if the parser needs to retain any portion
+of <code class="code">buf</code> thereafter, it makes its own copy.
+<p>
+
+Optional arguments:<br>
+</div>
+<div class="param_info"><code class="code">context</code> : provide this value to the first callback to be invoked by this
+parse operation, instead of the last-returned value.</div>
+<div class="param_info"><code class="code">ofs</code> : offset into <code class="code">buf</code> at which to begin reading data (default: <code class="code">0</code>)</div>
+<div class="param_info"><code class="code">len</code> : amount of data to read (default: <code class="code">String.length buf - ofs</code>)</div>
+<div class="param_info"><code class="code">pinned</code> : <em>Unsafe:</em> set this to true only if you can guarantee that the
+OCaml garbage collector will not relocate the in-memory representation of <code class="code">buf</code>
+during the parse operation (including the execution of your callbacks). This
+might be the case if, for example, <code class="code">buf</code> resides in memory managed by the
+<code class="code">Ancient</code> or <code class="code">Netsys_mem</code> libraries. If <code class="code">buf</code> is pinned, we don't have to make
+an extra copy of the data for YAJL to work on. To be clear: <em>you cannot use
+this on any <code class="code">string</code> allocated in the usual way!</em></div>
+<pre><span id="VALcomplete_parse"><span class="keyword">val</span> complete_parse</span> : <code class="type">?context:'a -> ?t:('a -> 'a) -> 'a <a href="YAJL.html#TYPEparser">parser</a> -> 'a</code></pre><div class="info">
+Complete the parsing of any remaining buffers once there is no more data
+to be received, and return the final context value.<br>
+</div>
+<div class="param_info"><code class="code">context</code> : as in <code class="code">parse</code></div>
+<div class="param_info"><code class="code">t</code> : an optional final transform to apply to the context value before
+returning it</div>
+<pre><span id="EXCEPTIONParse_error"><span class="keyword">exception</span> Parse_error</span> <span class="keyword">of</span> <code class="type">string</code></pre>
+<div class="info">
+May be raised by <code class="code">parse</code> or <code class="code">complete_parse</code><br>
+</div>
+<pre><span id="VALcontext"><span class="keyword">val</span> context</span> : <code class="type">?t:('a -> 'a) -> 'a <a href="YAJL.html#TYPEparser">parser</a> -> 'a</code></pre><div class="info">
+Retrieve the context value most recently returned by a callback from the
+parser (or the initial context value provided to <code class="code">make_parser</code>, <code class="code">parse</code>, or
+<code class="code">complete_parse</code> if no callbacks have executed). This function might be useful
+to retrieve an intermediate result between parsing buffers, or following a
+<code class="code">Parse_error</code> or other exception.<br>
+</div>
+<div class="param_info"><code class="code">t</code> : as in <code class="code">complete_parse</code></div>
+<br>
+<span id="2_JSONgenerator"><h2>JSON generator</h2></span><br>
+<pre><span id="TYPEgen_option"><span class="keyword">type</span> <code class="type"></code>gen_option</span> = <code class="type">[ `Beautify | `Beautify_with of string | `Escape_solidus | `Validate_UTF8 ]</code> </pre>
+<div class="info">
+generator options:<ul>
+<li><code class="code">`Beautify</code>: generate indented output, using the default indentation (four spaces)</li>
+<li><code class="code">`Beautify_with</code>: generate indented output using the given string as indentation. The string must contain only whitespace characaters.</li>
+<li><code class="code">`Validate_UTF8</code>: perform UTF-8 validation on string outputs</li>
+<li><code class="code">`Escape_solidus</code>: escape forward-slashes in JSON text (convenience for pasting JSON into HTML)</li>
+</ul>
+<br>
+</div>
+
+<pre><span id="TYPEgen"><span class="keyword">type</span> <code class="type"></code>gen</span> </pre>
+
+<pre><span id="VALmake_gen"><span class="keyword">val</span> make_gen</span> : <code class="type">?options:<a href="YAJL.html#TYPEgen_option">gen_option</a> list -> unit -> <a href="YAJL.html#TYPEgen">gen</a></code></pre><div class="info">
+make a new generator.<br>
+</div>
+<pre><span id="VALgen_get_buf"><span class="keyword">val</span> gen_get_buf</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> string * int * int</code></pre><div class="info">
+Retrieve the current buffer of generated JSON, as a
+    <code class="code">(buffer,offset,length)</code> tuple, after you have called the generator functions
+    (below).<br>
+</div>
+<pre><span id="VALgen_clear"><span class="keyword">val</span> gen_clear</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre><div class="info">
+Clear the current buffer of generated JSON. To generate a very large JSON
+    without keeping it all in memory, you would periodically get a chunk of
+    generated JSON text using <code class="code">gen_get_buf</code>, call <code class="code">gen_clear</code> to clear out the
+    buffer for the next chunk, and then continue calling the generator functions.
+<p>
+
+    <b>Caution: </b> calling <code class="code">gen_clear</code> invalidates any <code class="code">(buffer,offset,length)</code>
+    tuple previously returned by <code class="code">gen_get_buf</code>. If you need to keep that data
+    around, make a copy using <code class="code">String.sub</code> first.<br>
+</div>
+<br>
+<b>JSON generator functions</b>
+<p>
+
+In general, the generator functions can raise <code class="code">Failure</code> for semantic errors
+such as attempting to generate a non-string value when a map key is expected
+in the generated JSON. Specifically, <code class="code">Failure</code> is raised for these status
+codes defined in the <a href=" https://github.com/lloyd/yajl/blob/master/src/api/yajl_gen.h "> YAJL API</a>:<ul>
+<li><code class="code">yajl_gen_keys_must_be_strings</code></li>
+<li><code class="code">yajl_max_depth_exceeded</code></li>
+<li><code class="code">yajl_gen_in_error_state</code></li>
+<li><code class="code">yajl_gen_generation_complete</code></li>
+</ul>
+
+A few other errors have specific exceptions defined below.
+<p>
+
+<b>Caution:</b> YAJL itself does only minimal validation of the sequence of
+generator function calls; for example, it may not detect if you invoke
+<code class="code">gen_end_array</code> when you are not in an array. The OCaml bindings perform no
+additional validation.<br>
+<pre><span id="VALgen_string"><span class="keyword">val</span> gen_string</span> : <code class="type">?ofs:int -> ?len:int -> <a href="YAJL.html#TYPEgen">gen</a> -> string -> unit</code></pre><div class="info">
+Generate either a map key or a string value, depending on the generator state.<br>
+</div>
+<div class="param_info"><code class="code">ofs</code> : offset into the buffer <code class="code">buf</code> at which to begin reading data (default: <code class="code">0</code>)</div>
+<div class="param_info"><code class="code">len</code> : amount of data to read (default: <code class="code">String.length buf - ofs</code>)</div>
+<pre><span id="EXCEPTIONGen_invalid_string"><span class="keyword">exception</span> Gen_invalid_string</span> <span class="keyword">of</span> <code class="type">string * int * int</code></pre>
+<div class="info">
+raised by <code class="code">gen_string</code> when the <code class="code">`Validate_UTF8</code> option is active and
+    validation of your string fails<br>
+</div>
+<pre><span id="VALgen_int"><span class="keyword">val</span> gen_int</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> int -> unit</code></pre><pre><span id="VALgen_int64"><span class="keyword">val</span> gen_int64</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> Int64.t -> unit</code></pre><pre><span id="VALgen_float"><span class="keyword">val</span> gen_float</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> float -> unit</code></pre><pre><span id="EXCEPTIONGen_invalid_float"><span class="keyword">exception</span> Gen_invalid_float</span> <span class="keyword">of</span> <code class="type">float</code></pre>
+<div class="info">
+<code class="code">gen_float</code> raises <code class="code">Gen_invalid_float</code> if the number is not representable
+    as JSON (<code class="code">nan</code>, <code class="code">infinity</code>, or <code class="code">neg_infinity</code>)<br>
+</div>
+<pre><span id="VALgen_number"><span class="keyword">val</span> gen_number</span> : <code class="type">?ofs:int -> ?len:int -> <a href="YAJL.html#TYPEgen">gen</a> -> string -> unit</code></pre><div class="info">
+generate a number from a raw string representation. YAJL does not validate the contents.<br>
+</div>
+<pre><span id="VALgen_null"><span class="keyword">val</span> gen_null</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre><pre><span id="VALgen_bool"><span class="keyword">val</span> gen_bool</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> bool -> unit</code></pre><pre><span id="VALgen_start_map"><span class="keyword">val</span> gen_start_map</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre><pre><span id="VALgen_end_map"><span class="keyword">val</span> gen_end_map</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre><pre><span id="VALgen_start_array"><span class="keyword">val</span> gen_start_array</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre><pre><span id="VALgen_end_array"><span class="keyword">val</span> gen_end_array</span> : <code class="type"><a href="YAJL.html#TYPEgen">gen</a> -> unit</code></pre></body></html>
