@@ -452,7 +452,7 @@ value yajl_ocaml_gen_get_buf(value box) {
       caml_alloc_string.
     */
   default:
-    caml_failwith("YAJL.get_gen_buf");
+    caml_failwith("YAJL.gen_get_buf");
   }
 
   CAMLreturn(ans);
