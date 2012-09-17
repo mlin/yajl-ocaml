@@ -1,6 +1,4 @@
-(** OCaml bindings for the YAJL streaming JSON parser
-
-@see < http://lloyd.github.com/yajl/ > YAJL home page *)
+(** {{: http://github.com/mlin/yajl-ocaml/ } yajl-ocaml}: OCaml bindings for the {{: http://lloyd.github.com/yajl/ } YAJL} streaming JSON parser *)
 
 (** {2 YAJL callbacks} 
 
