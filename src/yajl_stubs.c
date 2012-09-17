@@ -442,7 +442,7 @@ value yajl_ocaml_gen_get_buf(value box) {
   switch (yajl_gen_get_buf(p->yajl, &buf, &len)) {
   case yajl_gen_status_ok:
     ans = caml_alloc_tuple(3);
-    Store_field(ans, 0, caml_copy_string(buf));
+    Store_field(ans, 0, caml_copy_string((const char*)buf));
     Store_field(ans, 1, Val_int(0));
     Store_field(ans, 2, Val_int(len));
     break;
@@ -514,7 +514,7 @@ value yajl_ocaml_gen_float(value box, value x) {
 
 value yajl_ocaml_gen_number(value box, value buf, value ofs, value len) {
   CAMLparam4(box, buf, ofs, len);
-  BEGIN_GEN(yajl_gen_number(p->yajl, (unsigned char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
+  BEGIN_GEN(yajl_gen_number(p->yajl, (const char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
   END_GEN("YAJL.gen_number")
 }
 
