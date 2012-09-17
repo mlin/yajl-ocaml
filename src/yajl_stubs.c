@@ -467,6 +467,7 @@ value yajl_ocaml_gen_clear(value box) {
   CAMLreturn(Val_unit);
 }
 
+/* Boilerplate macros for the generator functions */
 #define BEGIN_GEN(yajl_call) struct gen *p = Gen_val(box);\
   switch(yajl_call) { \
   case yajl_status_ok: break;
