@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="JSON" rel="Chapter" href="JSON.html"><link title="JSON representation" rel="Section" href="#2_JSONrepresentation">
+<link title="Parsing" rel="Section" href="#2_Parsing">
+<link title="Stringification" rel="Section" href="#2_Stringification">
+<title>JSON</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="index.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_JSON.html">JSON</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> JSON: <code class="code">sig</code> <a href="JSON.html">..</a> <code class="code">end</code></pre>A high-level JSON representation using convenient data structures from
+    <a href=" https://github.com/ocaml-batteries-team/batteries-included "> batteries</a>,
+    and <a href=" https://github.com/mlin/yajl-ocaml "> yajl-ocaml</a> for the parsing and
+    stringification.
+<p>
+
+Note: Although YAJL is very fast, this module's high-level parser, which
+produces purely-functional data structures with a lot of generic capabilities,
+is not markedly faster than other OCaml JSON libraries (nor slower), and does
+not take advantage of YAJL's streaming features. If your main requirement is
+super-efficient parsing, you should use the YAJL
+<a href=" http://mlin.github.com/yajl-ocaml/YAJL.html "> callback API</a> directly.<br>
+<hr width="100%">
+<br>
+<span id="2_JSONrepresentation"><h2>JSON representation</h2></span>
+<p>
+
+The data structure uses
+<a href=" http://ocaml-batteries-team.github.com/batteries-included/hdoc/BatMap.html "> <code class="code">Batteries.Map</code></a>
+for objects and
+<a href=" http://ocaml-batteries-team.github.com/batteries-included/hdoc/BatVect.html "> <code class="code">Batteries.Vect</code></a>
+for arrays:<br>
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">[ `Array of <a href="JSON.html#TYPEt">t</a> Batteries_uni.Vect.t<br>       | `Bool of bool<br>       | `Float of float<br>       | `Int of int<br>       | `Null<br>       | `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t<br>       | `String of string ]</code> </pre>
+
+<pre><span class="keyword">module</span> <a href="JSON.Ops.html">Ops</a>: <code class="code">sig</code> <a href="JSON.Ops.html">..</a> <code class="code">end</code></pre><div class="info">
+Convenient operators and functions for working with the JSON representation.
+</div>
+<br>
+<span id="2_Parsing"><h2>Parsing</h2></span><br>
+<pre><span id="TYPEparser_option"><span class="keyword">type</span> <code class="type"></code>parser_option</span> = <code class="type">[ `Allow_comments | `Allow_trailing_garbage | `Dont_validate_strings ]</code> </pre>
+<div class="info">
+A subset of the YAJL parser options supported by the high-level parser<br>
+</div>
+
+<pre><span id="VALparse"><span class="keyword">val</span> parse</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+Parse a complete JSON stored in memory. The <em>unsafe</em> <code class="code">pinned</code> option is
+    adopted from <code class="code">YAJL.parse</code>; see the
+    <a href=" http://mlin.github.com/yajl-ocaml/YAJL.html "> yajl-ocaml docs</a>
+    for an explanation of the <em>very specific</em> conditions under which it can
+    be used.<br>
+</div>
+<pre><span id="VALparse_file"><span class="keyword">val</span> parse_file</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+Parse a file given the filename; the entire contents are read into memory
+    and then parsed.<br>
+</div>
+<pre><span id="TYPEintermediate"><span class="keyword">type</span> <code class="type"></code>intermediate</span> </pre>
+
+<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> unit -> <a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser</code></pre><pre><span id="VALcomplete_parse"><span class="keyword">val</span> complete_parse</span> : <code class="type"><a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>. Maybe convenient if
+    you're streaming bytes from a TCP connection. To use the parser, you'd
+    call <code class="code">make_parser</code> to create one, <code class="code">YAJL.parse</code> to add data, and then
+    <code class="code">complete_parse</code> to retrieve the results.<br>
+</div>
+<br>
+<span id="2_Stringification"><h2>Stringification</h2></span><br>
+<pre><span id="VALgenerate"><span class="keyword">val</span> generate</span> : <code class="type">?options:YAJL.gen_option list -> <a href="JSON.html#TYPEt">t</a> -> string</code></pre><div class="info">
+Generate JSON text.<br>
+</div>
+<pre><span id="VALgenerate_file"><span class="keyword">val</span> generate_file</span> : <code class="type">?options:YAJL.gen_option list -> string -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+Write JSON to the given filename.<br>
+</div>
+<pre><span id="VALgen"><span class="keyword">val</span> gen</span> : <code class="type">YAJL.gen -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+Low-level: call YAJL generator functions to generate this JSON.<br>
+</div>
+</body></html>

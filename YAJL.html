@@ -139,14 +139,14 @@ to the parser's caller). The parser cannot be used after such an exception.<br>
 
 <br>
 <span id="2_CallbackJSONparser"><h2>Callback JSON parser</h2></span><br>
-<pre><span id="TYPEparser_options"><span class="keyword">type</span> <code class="type"></code>parser_options</span> = <code class="type">[ `Allow_comments<br>       | `Allow_multiple_values<br>       | `Allow_partial_values<br>       | `Allow_trailing_garbage<br>       | `Dont_validate_strings ]</code> </pre>
+<pre><span id="TYPEparser_option"><span class="keyword">type</span> <code class="type"></code>parser_option</span> = <code class="type">[ `Allow_comments<br>       | `Allow_multiple_values<br>       | `Allow_partial_values<br>       | `Allow_trailing_garbage<br>       | `Dont_validate_strings ]</code> </pre>
 <div class="info">
 The grammar recognized by the parser can be relaxed using these options.<br>
 </div>
 
 <pre><span id="TYPEparser"><span class="keyword">type</span> <code class="type">'a</code> parser</span> </pre>
 
-<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="YAJL.html#TYPEparser_options">parser_options</a> list -><br>       'a <a href="YAJL.html#TYPEcallbacks">callbacks</a> -> 'a -> 'a <a href="YAJL.html#TYPEparser">parser</a></code></pre><div class="info">
+<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="YAJL.html#TYPEparser_option">parser_option</a> list -> 'a <a href="YAJL.html#TYPEcallbacks">callbacks</a> -> 'a -> 'a <a href="YAJL.html#TYPEparser">parser</a></code></pre><div class="info">
 Make a new parser with the given callbacks and initial context value.<br>
 </div>
 <pre><span id="VALparse"><span class="keyword">val</span> parse</span> : <code class="type">?context:'a -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> 'a <a href="YAJL.html#TYPEparser">parser</a> -> string -> unit</code></pre><div class="info">
