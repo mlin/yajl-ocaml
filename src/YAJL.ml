@@ -37,7 +37,7 @@ type 'a parser = {
 exception Parse_error of string
 Callback.register_exception "yajl_ocaml_parse_error" (Parse_error "")
 
-type parser_options = [
+type parser_option = [
     `Allow_comments
   | `Dont_validate_strings
   | `Allow_trailing_garbage

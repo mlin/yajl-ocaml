@@ -58,7 +58,7 @@ type 'a callbacks = {
 (** {2 Callback JSON parser} *)
 
 (** The grammar recognized by the parser can be relaxed using these options. *)
-type parser_options = [
+type parser_option = [
 	  `Allow_comments         (** Ignore inline JavaScript-style comments *)
 	| `Dont_validate_strings  (** Do not reject invalid UTF-8 strings *)
 	| `Allow_trailing_garbage (** Ignore arbitrary garbage following the first map or array in the input stream *)
@@ -69,7 +69,7 @@ type parser_options = [
 type 'a parser
 
 (** Make a new parser with the given callbacks and initial context value. *)
-val make_parser : ?options:(parser_options list) -> 'a callbacks -> 'a -> 'a parser
+val make_parser : ?options:(parser_option list) -> 'a callbacks -> 'a -> 'a parser
 
 (** [parse parser buf] parses a chunk of data. The input JSON can be streamed by
 calling [parse] multiple times as the data become available.
