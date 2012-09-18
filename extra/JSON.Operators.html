@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="JSON.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="JSON" rel="Chapter" href="JSON.html"><title>JSON.Operators</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="JSON.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_JSON.Operators.html">JSON.Operators</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> Operators: <code class="code">sig</code> <a href="JSON.Operators.html">..</a> <code class="code">end</code></pre>Convenient operators for working with the JSON representation.
+    The author tends to <code class="code">open JSON.Operators</code> in programs.<br>
+<hr width="100%">
+<pre><span id="VAL($)"><span class="keyword">val</span> ($)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> string -> <a href="JSON.html#TYPEt">JSON.t</a></code></pre><div class="info">
+<code class="code">obj $ "foo"</code> retrieves the value of key <code class="code">"foo"</code> in the object <code class="code">obj</code>.<br>
+</div>
+<pre><span id="VAL($?)"><span class="keyword">val</span> ($?)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> string -> bool</code></pre><div class="info">
+<code class="code">obj $? "foo"</code> tests whether object <code class="code">obj</code> has key <code class="code">"foo"</code>.<br>
+</div>
+<pre><span id="VAL($+)"><span class="keyword">val</span> ($+)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> string * <a href="JSON.html#TYPEt">JSON.t</a> -> <a href="JSON.html#TYPEt">JSON.t</a></code></pre><div class="info">
+<code class="code">obj $+ ("foo",json)</code> returns an object in which the key <code class="code">"foo"</code> has been
+      set to the value <code class="code">json</code>, replacing a previous value at that key if one was
+      present. The original object is not modified.<br>
+</div>
+<pre><span id="VAL($-)"><span class="keyword">val</span> ($-)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> string -> <a href="JSON.html#TYPEt">JSON.t</a></code></pre><div class="info">
+<code class="code">obj $- "foo"</code> returns an object in which the key <code class="code">"foo"</code> has been removed
+      if it existed. No error is raised if there was no such key. The original
+      object is not modified.<br>
+</div>
+<pre><span id="VAL($@)"><span class="keyword">val</span> ($@)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> int -> <a href="JSON.html#TYPEt">JSON.t</a></code></pre><div class="info">
+<code class="code">arr $@ k</code> retrieves the value at zero-based position <code class="code">k</code> in the array <code class="code">arr</code>.<br>
+</div>
+<pre><span id="VAL($@!)"><span class="keyword">val</span> ($@!)</span> : <code class="type"><a href="JSON.html#TYPEt">JSON.t</a> -> int * <a href="JSON.html#TYPEt">JSON.t</a> -> <a href="JSON.html#TYPEt">JSON.t</a></code></pre><div class="info">
+<code class="code">arr $@! (k,json)</code> returns an array in which zero-based position <code class="code">k</code> has
+      been replaced with <code class="code">json</code>. The original array is not modified.<br>
+</div>
+</body></html>
