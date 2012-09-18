@@ -25,6 +25,12 @@
 <code class="code">obj $ "foo"</code> retrieves the value of key <code class="code">"foo"</code> in the object <code class="code">obj</code>.
 </div>
 </td></tr>
+<tr><td><a href="JSON.Ops.html#VAL($-)">($-)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<td><div class="info">
+<code class="code">obj $- "foo"</code> returns an object in which the key <code class="code">"foo"</code> has been removed
+      if it existed.
+</div>
+</td></tr>
 <tr><td><a href="JSON.Ops.html#VAL($?)">($?)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
 <td><div class="info">
 <code class="code">obj $? "foo"</code> tests whether object <code class="code">obj</code> has key <code class="code">"foo"</code>.
@@ -47,20 +53,16 @@
 Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>.
 </div>
 </td></tr>
-<tr><td align="left"><br>G</td></tr>
-<tr><td><a href="JSON.html#VALgen">gen</a> [<a href="JSON.html">JSON</a>]</td>
+<tr><td align="left"><br>E</td></tr>
+<tr><td><a href="JSON.html#VALempty">empty</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
-Low-level: call YAJL generator functions to generate this JSON.
+The empty JSON (<code class="code">JSON.parse "{}"</code>)
 </div>
 </td></tr>
+<tr><td align="left"><br>G</td></tr>
 <tr><td><a href="JSON.html#VALgenerate">generate</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
-Generate JSON text.
-</div>
-</td></tr>
-<tr><td><a href="JSON.html#VALgenerate_file">generate_file</a> [<a href="JSON.html">JSON</a>]</td>
-<td><div class="info">
-Write JSON to the given filename.
+Low-level: call YAJL generator functions to generate this JSON.
 </div>
 </td></tr>
 <tr><td align="left"><br>J</td></tr>
@@ -85,6 +87,8 @@ Accessors, any of which may raise <code class="code">JSON_type_mismatch</code>.
 <td></td></tr>
 <tr><td><a href="JSON.Ops.html#VALjson_object_keys">json_object_keys</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
 <td></td></tr>
+<tr><td><a href="JSON.Ops.html#VALjson_object_or_null">json_object_or_null</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<td></td></tr>
 <tr><td><a href="JSON.Ops.html#VALjson_string">json_string</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
 <td></td></tr>
 <tr><td align="left"><br>M</td></tr>
@@ -100,6 +104,17 @@ Parse a complete JSON stored in memory.
 <td><div class="info">
 Parse a file given the filename; the entire contents are read into memory
     and then parsed.
+</div>
+</td></tr>
+<tr><td align="left"><br>T</td></tr>
+<tr><td><a href="JSON.html#VALto_file">to_file</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Write JSON to the given filename.
+</div>
+</td></tr>
+<tr><td><a href="JSON.html#VALto_string">to_string</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Generate JSON text.
 </div>
 </td></tr>
 </table><br>

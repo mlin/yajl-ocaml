@@ -248,10 +248,10 @@ codes defined in the <a href=" https://github.com/lloyd/yajl/blob/master/src/api
 A few other errors have specific exceptions defined below.
 <p>
 
-<b>Caution:</b> YAJL itself does only minimal validation of the sequence of
-generator function calls; for example, it may not detect if you invoke
-<code class="code">gen_end_array</code> when you are not in an array. The OCaml bindings perform no
-additional validation.<br>
+<b>Caution:</b> YAJL does only minimal validation of the sequence of generator
+function calls; for example, it may not detect if you invoke <code class="code">gen_end_array</code>
+when you are not in an array. Also, note that YAJL has a hardcoded limitation
+of 128 nesting levels for arrays/objects during JSON generation.<br>
 <pre><span id="VALgen_string"><span class="keyword">val</span> gen_string</span> : <code class="type">?ofs:int -> ?len:int -> <a href="YAJL.html#TYPEgen">gen</a> -> string -> unit</code></pre><div class="info">
 Generate either a map key or a string value, depending on the generator state.<br>
 </div>

@@ -46,6 +46,9 @@ for arrays:<br>
 <pre><span class="keyword">module</span> <a href="JSON.Ops.html">Ops</a>: <code class="code">sig</code> <a href="JSON.Ops.html">..</a> <code class="code">end</code></pre><div class="info">
 Convenient operators and functions for working with the JSON representation.
 </div>
+<pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+The empty JSON (<code class="code">JSON.parse "{}"</code>)<br>
+</div>
 <br>
 <span id="2_Parsing"><h2>Parsing</h2></span><br>
 <pre><span id="TYPEparser_option"><span class="keyword">type</span> <code class="type"></code>parser_option</span> = <code class="type">[ `Allow_comments | `Allow_trailing_garbage | `Dont_validate_strings ]</code> </pre>
@@ -74,13 +77,14 @@ Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>. May
 </div>
 <br>
 <span id="2_Stringification"><h2>Stringification</h2></span><br>
-<pre><span id="VALgenerate"><span class="keyword">val</span> generate</span> : <code class="type">?options:YAJL.gen_option list -> <a href="JSON.html#TYPEt">t</a> -> string</code></pre><div class="info">
-Generate JSON text.<br>
+<pre><span id="VALto_string"><span class="keyword">val</span> to_string</span> : <code class="type">?options:YAJL.gen_option list -> <a href="JSON.html#TYPEt">t</a> -> string</code></pre><div class="info">
+Generate JSON text. Note that YAJL has a hardcoded limitation
+of 128 nesting levels for arrays/objects during JSON generation.<br>
 </div>
-<pre><span id="VALgenerate_file"><span class="keyword">val</span> generate_file</span> : <code class="type">?options:YAJL.gen_option list -> string -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<pre><span id="VALto_file"><span class="keyword">val</span> to_file</span> : <code class="type">?options:YAJL.gen_option list -> string -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 Write JSON to the given filename.<br>
 </div>
-<pre><span id="VALgen"><span class="keyword">val</span> gen</span> : <code class="type">YAJL.gen -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
+<pre><span id="VALgenerate"><span class="keyword">val</span> generate</span> : <code class="type">YAJL.gen -> <a href="JSON.html#TYPEt">t</a> -> unit</code></pre><div class="info">
 Low-level: call YAJL generator functions to generate this JSON.<br>
 </div>
 </body></html>
