@@ -48,10 +48,10 @@ module Ops : sig
   (** [obj $? "foo"] tests whether object [obj] has key ["foo"]. *)
   val ($?) : t -> string -> bool
 
-  (** [obj $! ("foo",json)] returns an object in which the key ["foo"] has been
+  (** [obj $+ ("foo",json)] returns an object in which the key ["foo"] has been
       set to the value [json], replacing a previous value at that key if one was
       present. The original object is not modified. *)
-  val ($!) : t -> (string*t) -> t
+  val ($+) : t -> (string*t) -> t
 
   (** [obj $- "foo"] returns an object in which the key ["foo"] has been removed
       if it existed. No error is raised if there was no such key. The original
