@@ -170,6 +170,7 @@ module Ops = struct
       | Not_found -> raise (JSON_not_found (key,json))
   let ($?) json key = Map.mem key (json_object json)
   let ($!) json (key,v) = `Object (Map.add key v (json_object json))
+  let ($-) json key = `Object (Map.remove key (json_object json))
   let ($@) json k = Vect.get (json_array json) k
   let ($@!) json (k,v) = `Array (Vect.set (json_array json) k v)
 

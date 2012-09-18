@@ -53,6 +53,11 @@ module Ops : sig
       present. The original object is not modified. *)
   val ($!) : t -> (string*t) -> t
 
+  (** [obj $- "foo"] returns an object in which the key ["foo"] has been removed
+      if it existed. No error is raised if there was no such key. The original
+      object is not modified. *)
+  val ($-) : t -> string -> t
+
   (** [arr $@ k] retrieves the value at zero-based position [k] in the array [arr]. *)
   val ($@) : t -> int -> t
 
