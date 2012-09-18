@@ -35,8 +35,8 @@ type json_object_or_null = [`Object of (string,t) Batteries_uni.Map.t | `Null]
 type json_array = [`Array of t Batteries_uni.Vect.t]
 type json_object_or_array = [`Object of (string,t) Batteries_uni.Map.t | `Array of t Batteries_uni.Vect.t]
 
-(** Subsets of [JSON.t] that just serve as abbreviations in the signatures of
-operations (below) that return one of these more-specific types. *)
+(** Subtypes of [JSON.t] that just serve as abbreviations in the signatures
+of operations (below) that return one of these more-specific types. *)
 type json_number = [`Int of int | `Float of float]
 
 (** Convenient operators and functions for working with the JSON representation.
