@@ -152,6 +152,10 @@ module Ops = struct
   let json_object = function
     | `Object map -> map
     | json -> raise (JSON_type_mismatch ("Object",json))
+  let json_object_or_null = function
+    | `Null as x -> (x :> [`Object of (string,t) Map.t | `Null])
+    | (`Object _) as x -> (x :> [`Object of (string,t) Map.t | `Null])
+    | json -> raise (JSON_type_mismatch ("Object/Null",json))
   let json_object_keys = function
     | `Object map -> List.of_enum (Map.keys map)
     | json -> raise (JSON_type_mismatch ("Object",json))

@@ -72,6 +72,7 @@ module Ops : sig
   val json_number : t -> [`Int of int | `Float of float]
   val json_string : t -> string
   val json_object : t -> (string,t) Batteries_uni.Map.t
+  val json_object_or_null : t -> [`Object of (string,t) Batteries_uni.Map.t | `Null]
   val json_object_keys : t -> string list
   val json_array : t -> t Batteries_uni.Vect.t
 
