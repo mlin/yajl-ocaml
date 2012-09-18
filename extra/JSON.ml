@@ -10,6 +10,13 @@ type t = [
   | `Array of t Vect.t
 ]
 
+type json_object = [`Object of (string,t) Batteries_uni.Map.t]
+type json_object_or_null = [`Object of (string,t) Batteries_uni.Map.t | `Null]
+type json_array = [`Array of t Batteries_uni.Vect.t]
+type json_object_or_array = [`Object of (string,t) Batteries_uni.Map.t | `Array of t Batteries_uni.Vect.t]
+type json_number = [`Int of int | `Float of float]
+
+
 type parser_option = [
     `Allow_comments
   | `Dont_validate_strings
@@ -76,7 +83,7 @@ let complete_parse = Parser.complete
 let parse ?options ?ofs ?len ?pinned buf =
   let parser = Parser.make ?options ()
   YAJL.parse ?ofs ?len ?pinned parser buf
-  Parser.complete parser :> t
+  Parser.complete parser
 
 let parse_file ?options fn =
   File.with_file_in fn (fun infile -> parse ?options (IO.read_all infile))
@@ -129,6 +136,10 @@ module Ops = struct
   exception JSON_type_mismatch of string*t
   exception JSON_not_found of string*t
 
+
+  type json_object = [`Object of (string,t) Batteries_uni.Map.t]
+  type json_array = [`Array of t Batteries_uni.Vect.t]
+
   let json_bool = function
     | `Bool b -> b
     | json -> raise (JSON_type_mismatch ("Bool",json))
@@ -150,32 +161,41 @@ module Ops = struct
     | `String s -> s
     | json -> raise (JSON_type_mismatch ("String",json))
   let json_object = function
+    | (`Object _) as x -> x
+    | json -> raise (JSON_type_mismatch ("Object",json))
+  let json_object' = function
     | `Object map -> map
     | json -> raise (JSON_type_mismatch ("Object",json))
   let json_object_or_null = function
-    | `Null as x -> (x :> [`Object of (string,t) Map.t | `Null])
-    | (`Object _) as x -> (x :> [`Object of (string,t) Map.t | `Null])
+    | `Null as x -> x
+    | (`Object _) as x -> x
     | json -> raise (JSON_type_mismatch ("Object/Null",json))
   let json_object_keys = function
     | `Object map -> List.of_enum (Map.keys map)
     | json -> raise (JSON_type_mismatch ("Object",json))
   let json_array = function
+    | (`Array _) as x -> x
+    | json -> raise (JSON_type_mismatch ("Array",json))
+  let json_array' = function
     | `Array items -> items
     | json -> raise (JSON_type_mismatch ("Array",json))
   let json_array_length = function
     | `Array items -> Vect.length items
     | json -> raise (JSON_type_mismatch ("Array",json))
 
-
   let ($) json key =
     try
-        Map.find key (json_object json)
+        Map.find key (json_object' json)
     with
       | Not_found -> raise (JSON_not_found (key,json))
-  let ($?) json key = Map.mem key (json_object json)
-  let ($+) json (key,v) = `Object (Map.add key v (json_object json))
-  let ($-) json key = `Object (Map.remove key (json_object json))
-  let ($@) json k = Vect.get (json_array json) k
-  let ($@!) json (k,v) = `Array (Vect.set (json_array json) k v)
+  let ($?) json key = Map.mem key (json_object' json)
+  let ($+) json (key,v) = `Object (Map.add key v (json_object' json))
+  let ($-) json key = `Object (Map.remove key (json_object' json))
+  let ($@) json k = Vect.get (json_array' json) k
+  let ($@!) json (k,v) = `Array (Vect.set (json_array' json) k v)
+
+  let json_of_assoc lst = json_object (List.fold_left ($+) (`Object Map.empty) lst)
+  let json_of_list lst = `Array (Vect.of_list lst)
+  let json_of_array arr = `Array (Vect.of_array arr)
 
 let empty = `Object Map.empty
