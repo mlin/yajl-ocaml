@@ -47,7 +47,7 @@ for arrays:<br>
 Convenient operators and functions for working with the JSON representation.
 </div>
 <pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
-The empty JSON (<code class="code">JSON.parse "{}"</code>)<br>
+The empty JSON (<code class="code">JSON.from_string "{}"</code> or equivalently <code class="code">`Object Map.empty</code>)<br>
 </div>
 <br>
 <span id="2_Parsing"><h2>Parsing</h2></span><br>
@@ -56,14 +56,14 @@ The empty JSON (<code class="code">JSON.parse "{}"</code>)<br>
 A subset of the YAJL parser options supported by the high-level parser<br>
 </div>
 
-<pre><span id="VALparse"><span class="keyword">val</span> parse</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+<pre><span id="VALfrom_string"><span class="keyword">val</span> from_string</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
 Parse a complete JSON stored in memory. The <em>unsafe</em> <code class="code">pinned</code> option is
     adopted from <code class="code">YAJL.parse</code>; see the
     <a href=" http://mlin.github.com/yajl-ocaml/YAJL.html "> yajl-ocaml docs</a>
     for an explanation of the <em>very specific</em> conditions under which it can
     be used.<br>
 </div>
-<pre><span id="VALparse_file"><span class="keyword">val</span> parse_file</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+<pre><span id="VALfrom_file"><span class="keyword">val</span> from_file</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
 Parse a file given the filename; the entire contents are read into memory
     and then parsed.<br>
 </div>

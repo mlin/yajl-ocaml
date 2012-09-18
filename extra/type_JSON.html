@@ -44,10 +44,10 @@
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;empty&nbsp;:&nbsp;<span class="constructor">JSON</span>.t<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;parser_option&nbsp;=<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Allow_comments</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Allow_trailing_garbage</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Dont_validate_strings</span>&nbsp;]<br>
-&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;parse&nbsp;:<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;from_string&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;?options:<span class="constructor">JSON</span>.parser_option&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;?ofs:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?len:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?pinned:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">JSON</span>.t<br>
-&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;parse_file&nbsp;:&nbsp;?options:<span class="constructor">JSON</span>.parser_option&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">JSON</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;from_file&nbsp;:&nbsp;?options:<span class="constructor">JSON</span>.parser_option&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">JSON</span>.t<br>
 &nbsp;&nbsp;<span class="keyword">type</span>&nbsp;intermediate<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;make_parser&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;?options:<span class="constructor">JSON</span>.parser_option&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">JSON</span>.intermediate&nbsp;<span class="constructor">YAJL</span>.<span class="keyword">parser</span><br>

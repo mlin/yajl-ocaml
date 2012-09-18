@@ -56,7 +56,19 @@ Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>.
 <tr><td align="left"><br>E</td></tr>
 <tr><td><a href="JSON.html#VALempty">empty</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
-The empty JSON (<code class="code">JSON.parse "{}"</code>)
+The empty JSON (<code class="code">JSON.from_string "{}"</code> or equivalently <code class="code">`Object Map.empty</code>)
+</div>
+</td></tr>
+<tr><td align="left"><br>F</td></tr>
+<tr><td><a href="JSON.html#VALfrom_file">from_file</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Parse a file given the filename; the entire contents are read into memory
+    and then parsed.
+</div>
+</td></tr>
+<tr><td><a href="JSON.html#VALfrom_string">from_string</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Parse a complete JSON stored in memory.
 </div>
 </td></tr>
 <tr><td align="left"><br>G</td></tr>
@@ -94,18 +106,6 @@ Accessors, any of which may raise <code class="code">JSON_type_mismatch</code>.
 <tr><td align="left"><br>M</td></tr>
 <tr><td><a href="JSON.html#VALmake_parser">make_parser</a> [<a href="JSON.html">JSON</a>]</td>
 <td></td></tr>
-<tr><td align="left"><br>P</td></tr>
-<tr><td><a href="JSON.html#VALparse">parse</a> [<a href="JSON.html">JSON</a>]</td>
-<td><div class="info">
-Parse a complete JSON stored in memory.
-</div>
-</td></tr>
-<tr><td><a href="JSON.html#VALparse_file">parse_file</a> [<a href="JSON.html">JSON</a>]</td>
-<td><div class="info">
-Parse a file given the filename; the entire contents are read into memory
-    and then parsed.
-</div>
-</td></tr>
 <tr><td align="left"><br>T</td></tr>
 <tr><td><a href="JSON.html#VALto_file">to_file</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
