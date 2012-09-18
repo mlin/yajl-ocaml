@@ -1,5 +1,5 @@
 default: all
-.PHONY: default all install doc test extra install-extra git-submodule-incantations tidy clean
+.PHONY: default all install doc test extra install-extra doc-extra gh-pages git-submodule-incantations tidy clean
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
@@ -61,3 +61,18 @@ clean: tidy
 	cd twt && (make clean || true)
 	rm -rf upstream/local
 	rm -f sample.json
+
+# TODO: make this safer but still convenient
+gh-pages: clean
+	rm -rf /tmp/yajl.docdir /tmp/extra.docdir
+	$(MAKE) doc
+	cp -r src/_build/yajl.docdir /tmp
+	$(MAKE) doc-extra
+	cp -r extra/_build/JSON.docdir /tmp
+	git checkout gh-pages
+	git pull origin gh-pages
+	cp /tmp/yajl.docdir/* .
+	cp /tmp/JSON.docdir/* extra
+	git commit -am 'update ocamldoc documentation [via make gh-pages]'
+	git push origin gh-pages
+	git checkout master
