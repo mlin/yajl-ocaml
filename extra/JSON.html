@@ -43,11 +43,26 @@ for objects and
 for arrays:<br>
 <pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">[ `Array of <a href="JSON.html#TYPEt">t</a> Batteries_uni.Vect.t<br>       | `Bool of bool<br>       | `Float of float<br>       | `Int of int<br>       | `Null<br>       | `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t<br>       | `String of string ]</code> </pre>
 
+<pre><span id="TYPEjson_object"><span class="keyword">type</span> <code class="type"></code>json_object</span> = <code class="type">[ `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t ]</code> </pre>
+
+<pre><span id="TYPEjson_object_or_null"><span class="keyword">type</span> <code class="type"></code>json_object_or_null</span> = <code class="type">[ `Null | `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t ]</code> </pre>
+
+<pre><span id="TYPEjson_array"><span class="keyword">type</span> <code class="type"></code>json_array</span> = <code class="type">[ `Array of <a href="JSON.html#TYPEt">t</a> Batteries_uni.Vect.t ]</code> </pre>
+
+<pre><span id="TYPEjson_object_or_array"><span class="keyword">type</span> <code class="type"></code>json_object_or_array</span> = <code class="type">[ `Array of <a href="JSON.html#TYPEt">t</a> Batteries_uni.Vect.t<br>       | `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t ]</code> </pre>
+
+<pre><span id="TYPEjson_number"><span class="keyword">type</span> <code class="type"></code>json_number</span> = <code class="type">[ `Float of float | `Int of int ]</code> </pre>
+<div class="info">
+Type abbreviations for defining the signatures of operations (below) that
+receive the larger JSON type above, but return one of these more-specific
+variant types.<br>
+</div>
+
 <pre><span class="keyword">module</span> <a href="JSON.Ops.html">Ops</a>: <code class="code">sig</code> <a href="JSON.Ops.html">..</a> <code class="code">end</code></pre><div class="info">
 Convenient operators and functions for working with the JSON representation.
 </div>
-<pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
-The empty JSON (<code class="code">JSON.from_string "{}"</code> or equivalently <code class="code">`Object Map.empty</code>)<br>
+<pre><span id="VALempty"><span class="keyword">val</span> empty</span> : <code class="type"><a href="JSON.html#TYPEjson_object">json_object</a></code></pre><div class="info">
+The empty JSON (<code class="code">JSON.parse "{}"</code>)<br>
 </div>
 <br>
 <span id="2_Parsing"><h2>Parsing</h2></span><br>
@@ -56,20 +71,20 @@ The empty JSON (<code class="code">JSON.from_string "{}"</code> or equivalently 
 A subset of the YAJL parser options supported by the high-level parser<br>
 </div>
 
-<pre><span id="VALfrom_string"><span class="keyword">val</span> from_string</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+<pre><span id="VALparse"><span class="keyword">val</span> parse</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -><br>       ?ofs:int -> ?len:int -> ?pinned:bool -> string -> <a href="JSON.html#TYPEjson_object_or_array">json_object_or_array</a></code></pre><div class="info">
 Parse a complete JSON stored in memory. The <em>unsafe</em> <code class="code">pinned</code> option is
     adopted from <code class="code">YAJL.parse</code>; see the
     <a href=" http://mlin.github.com/yajl-ocaml/YAJL.html "> yajl-ocaml docs</a>
     for an explanation of the <em>very specific</em> conditions under which it can
     be used.<br>
 </div>
-<pre><span id="VALfrom_file"><span class="keyword">val</span> from_file</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> string -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+<pre><span id="VALparse_file"><span class="keyword">val</span> parse_file</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> string -> <a href="JSON.html#TYPEjson_object_or_array">json_object_or_array</a></code></pre><div class="info">
 Parse a file given the filename; the entire contents are read into memory
     and then parsed.<br>
 </div>
 <pre><span id="TYPEintermediate"><span class="keyword">type</span> <code class="type"></code>intermediate</span> </pre>
 
-<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> unit -> <a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser</code></pre><pre><span id="VALcomplete_parse"><span class="keyword">val</span> complete_parse</span> : <code class="type"><a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser -> <a href="JSON.html#TYPEt">t</a></code></pre><div class="info">
+<pre><span id="VALmake_parser"><span class="keyword">val</span> make_parser</span> : <code class="type">?options:<a href="JSON.html#TYPEparser_option">parser_option</a> list -> unit -> <a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser</code></pre><pre><span id="VALcomplete_parse"><span class="keyword">val</span> complete_parse</span> : <code class="type"><a href="JSON.html#TYPEintermediate">intermediate</a> YAJL.parser -> <a href="JSON.html#TYPEjson_object_or_array">json_object_or_array</a></code></pre><div class="info">
 Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>. Maybe convenient if
     you're streaming bytes from a TCP connection. To use the parser, you'd
     call <code class="code">make_parser</code> to create one, <code class="code">YAJL.parse</code> to add data, and then
