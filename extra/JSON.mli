@@ -79,6 +79,8 @@ module Ops : sig
       also accepts [`Int] values and coerces them to [float]. *)
   val json_array_length : t -> int
 
+(** The empty JSON ([JSON.parse "{}"]) *)
+val empty : t
 
 (** {2 Parsing} *)
 

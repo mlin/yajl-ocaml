@@ -174,3 +174,4 @@ module Ops = struct
   let ($@) json k = Vect.get (json_array json) k
   let ($@!) json (k,v) = `Array (Vect.set (json_array json) k v)
 
+let empty = `Object Map.empty
