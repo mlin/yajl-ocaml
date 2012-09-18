@@ -63,7 +63,7 @@ clean: tidy
 	rm -f sample.json
 
 # TODO: make this safer but still convenient
-gh-pages: clean
+gh-pages: tidy
 	rm -rf /tmp/yajl.docdir /tmp/extra.docdir
 	$(MAKE) doc
 	cp -r src/_build/yajl.docdir /tmp

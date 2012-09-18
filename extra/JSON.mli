@@ -19,6 +19,7 @@ for objects and
 {{: http://ocaml-batteries-team.github.com/batteries-included/hdoc/BatVect.html } [Batteries.Vect]}
 for arrays: *)
 
+(** The general type of JSON data. *)
 type t = [
     `Null
   | `Bool of bool
@@ -29,15 +30,13 @@ type t = [
   | `Array of t Batteries_uni.Vect.t
 ]
 
-
 type json_object = [`Object of (string,t) Batteries_uni.Map.t]
 type json_object_or_null = [`Object of (string,t) Batteries_uni.Map.t | `Null]
 type json_array = [`Array of t Batteries_uni.Vect.t]
 type json_object_or_array = [`Object of (string,t) Batteries_uni.Map.t | `Array of t Batteries_uni.Vect.t]
 
-(** Type abbreviations for defining the signatures of operations (below) that
-receive the larger JSON type above, but return one of these more-specific
-variant types. *)
+(** Subsets of [JSON.t] that just serve as abbreviations in the signatures of
+operations (below) that return one of these more-specific types. *)
 type json_number = [`Int of int | `Float of float]
 
 (** Convenient operators and functions for working with the JSON representation.
