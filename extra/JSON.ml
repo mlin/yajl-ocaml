@@ -110,18 +110,18 @@ let gen_cps yajl (json:t) kont =
 
   gen_value_cps json kont
 
-let gen yajl json = gen_cps yajl json (fun () -> ())
+let generate yajl json = gen_cps yajl json (fun () -> ())
 
-let generate ?options json =
+let to_string ?options json =
   let yajl = YAJL.make_gen ?options ()
-  gen yajl json
+  generate yajl json
   let buf, ofs, len = YAJL.gen_get_buf yajl
   if ofs=0 && len=(String.length buf) then buf
   else String.sub buf ofs len
 
-let generate_file ?options fn json =
+let to_file ?options fn json =
   let yajl = YAJL.make_gen ?options ()
-  gen yajl json
+  generate yajl json
   let buf, ofs, len = YAJL.gen_get_buf yajl
   File.with_file_out fn (fun outfile -> ignore (IO.really_output outfile buf ofs len))
 

@@ -119,10 +119,10 @@ val complete_parse : intermediate YAJL.parser -> t
 
 (** Generate JSON text. Note that YAJL has a hardcoded limitation
 of 128 nesting levels for arrays/objects during JSON generation. *)
-val generate : ?options:(YAJL.gen_option list) -> t -> string
+val to_string : ?options:(YAJL.gen_option list) -> t -> string
 
 (** Write JSON to the given filename. *)
-val generate_file : ?options:(YAJL.gen_option list) -> string -> t -> unit
+val to_file : ?options:(YAJL.gen_option list) -> string -> t -> unit
 
 (** Low-level: call YAJL generator functions to generate this JSON. *)
-val gen : YAJL.gen -> t -> unit
+val generate : YAJL.gen -> t -> unit
