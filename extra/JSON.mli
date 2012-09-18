@@ -29,21 +29,50 @@ type t = [
   | `Array of t Batteries_uni.Vect.t
 ]
 
-(** Convenient operators and functions for working with the JSON representation.
-    The author tends to [open JSON.Ops] in programs. *)
-module Ops : sig
+(** The empty JSON ([JSON.from_string "{}"] or equivalently [`Object Map.empty]) *)
+val empty : t
 
-  (** Raised when one of the operators/functions below expects a certain JSON
-      type but is given another. Carries the expected type (e.g. ["Object"],
-      ["Float"]) and the actual value given. *)
-  exception JSON_type_mismatch of string*t
+(** {2 Coercions and operators} *)
+
+(** Raised when one of the operators/functions below expects a certain JSON
+    type but is given another. Carries the expected type (e.g. ["Object"],
+    ["Float"]) and the actual value given. *)
+exception Type_mismatch of string*t
+
+(** Raised when one of the operators/functions below expects a JSON object
+    with a certain key, but receives a JSON object without that key. *)
+exception No_key of string*t
+
+val bool : t -> bool
+val int : t -> int
+val float : t -> float
+val float' : t -> float
+val number : t -> [`Int of int | `Float of float]
+val string : t -> string
+val obj : t -> (string,t) Batteries_uni.Map.t
+val obj_or_null : t -> [`Object of (string,t) Batteries_uni.Map.t | `Null]
+val obj_keys : t -> string list
+val array : t -> t Batteries_uni.Vect.t
+
+(** Accessors, any of which may raise [JSON.Type_mismatch].
+
+[JSON.float'] also accepts [`Int] values and coerces them to [float]. *)
+val array_length : t -> int
+
+val of_assoc : (string*t) list -> t
+val of_list : t list -> t
+
+(** Constructors to ease formulating JSON with OCaml syntax literals.
+[JSON.of_assoc] constructs an object, while [JSON.of_list] and
+[JSON.of_array] construct arrays. *)
+val of_array : t array -> t
+
+(** Convenient operators for working with the JSON representation.
+    The author tends to [open JSON.Operators] in programs. *)
+module Operators : sig
 
   (** [obj $ "foo"] retrieves the value of key ["foo"] in the object [obj]. *)
   val ($) : t -> string -> t
-
-  (** Raised by the operator [($)] when the given JSON is an object but does not
-      contain the expected key. Carries the key and the object. *)
-  exception JSON_not_found of string*t
 
   (** [obj $? "foo"] tests whether object [obj] has key ["foo"]. *)
   val ($?) : t -> string -> bool
@@ -65,24 +94,6 @@ module Ops : sig
       been replaced with [json]. The original array is not modified. *)
   val ($@!) : t -> (int*t) -> t
 
-  val json_bool : t -> bool
-  val json_int : t -> int
-  val json_float : t -> float
-  val json_float' : t -> float
-  val json_number : t -> [`Int of int | `Float of float]
-  val json_string : t -> string
-  val json_object : t -> (string,t) Batteries_uni.Map.t
-  val json_object_or_null : t -> [`Object of (string,t) Batteries_uni.Map.t | `Null]
-  val json_object_keys : t -> string list
-  val json_array : t -> t Batteries_uni.Vect.t
-
-  (** Accessors, any of which may raise [JSON_type_mismatch]. [json_float']
-      also accepts [`Int] values and coerces them to [float]. *)
-  val json_array_length : t -> int
-
-(** The empty JSON ([JSON.parse "{}"]) *)
-val empty : t
-
 (** {2 Parsing} *)
 
 (** A subset of the YAJL parser options supported by the high-level parser *)
@@ -99,11 +110,11 @@ type parser_option = [
     for an explanation of the {e very specific} conditions under which it can
     be used.
 *)
-val parse : ?options:(parser_option list) -> ?ofs:int -> ?len:int -> ?pinned:bool -> string -> t
+val from_string : ?options:(parser_option list) -> ?ofs:int -> ?len:int -> ?pinned:bool -> string -> t
 
 (** Parse a file given the filename; the entire contents are read into memory
     and then parsed. *)
-val parse_file : ?options:(parser_option list) -> string -> t
+val from_file : ?options:(parser_option list) -> string -> t
 
 type intermediate
 

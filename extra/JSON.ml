@@ -10,6 +10,8 @@ type t = [
   | `Array of t Vect.t
 ]
 
+let empty = `Object Map.empty
+
 type parser_option = [
     `Allow_comments
   | `Dont_validate_strings
@@ -73,13 +75,13 @@ type intermediate = Parser.intermediate
 let make_parser = Parser.make
 let complete_parse = Parser.complete
 
-let parse ?options ?ofs ?len ?pinned buf =
+let from_string ?options ?ofs ?len ?pinned buf =
   let parser = Parser.make ?options ()
   YAJL.parse ?ofs ?len ?pinned parser buf
   Parser.complete parser :> t
 
-let parse_file ?options fn =
-  File.with_file_in fn (fun infile -> parse ?options (IO.read_all infile))
+let from_file ?options fn =
+  File.with_file_in fn (fun infile -> from_string ?options (IO.read_all infile))
 
 let gen_cps yajl (json:t) kont =
   let rec gen_value_cps v kont = match v with
@@ -125,57 +127,59 @@ let to_file ?options fn json =
   let buf, ofs, len = YAJL.gen_get_buf yajl
   File.with_file_out fn (fun outfile -> ignore (IO.really_output outfile buf ofs len))
 
-module Ops = struct
-  exception JSON_type_mismatch of string*t
-  exception JSON_not_found of string*t
+exception Type_mismatch of string*t
+exception No_key of string*t 
 
-  let json_bool = function
-    | `Bool b -> b
-    | json -> raise (JSON_type_mismatch ("Bool",json))
-  let json_int = function
-    | `Int i -> i
-    | json -> raise (JSON_type_mismatch ("Bool",json))
-  let json_float = function
-    | `Float x -> x
-    | json -> raise (JSON_type_mismatch ("Float",json))
-  let json_float' = function
-    | `Float x -> x
-    | `Int i -> float i
-    | json -> raise (JSON_type_mismatch ("Float",json))
-  let json_number = function
-    | (`Int _) as x -> x
-    | (`Float _) as x -> x
-    | json -> raise (JSON_type_mismatch ("number",json))
-  let json_string = function
-    | `String s -> s
-    | json -> raise (JSON_type_mismatch ("String",json))
-  let json_object = function
-    | `Object map -> map
-    | json -> raise (JSON_type_mismatch ("Object",json))
-  let json_object_or_null = function
-    | `Null as x -> (x :> [`Object of (string,t) Map.t | `Null])
-    | (`Object _) as x -> (x :> [`Object of (string,t) Map.t | `Null])
-    | json -> raise (JSON_type_mismatch ("Object/Null",json))
-  let json_object_keys = function
-    | `Object map -> List.of_enum (Map.keys map)
-    | json -> raise (JSON_type_mismatch ("Object",json))
-  let json_array = function
-    | `Array items -> items
-    | json -> raise (JSON_type_mismatch ("Array",json))
-  let json_array_length = function
-    | `Array items -> Vect.length items
-    | json -> raise (JSON_type_mismatch ("Array",json))
+let bool = function
+  | `Bool b -> b
+  | json -> raise (Type_mismatch ("Bool",json))
+let int = function
+  | `Int i -> i
+  | json -> raise (Type_mismatch ("Bool",json))
+let float = function
+  | `Float x -> x
+  | json -> raise (Type_mismatch ("Float",json))
+let float' = function
+  | `Float x -> x
+  | `Int i -> float_of_int i
+  | json -> raise (Type_mismatch ("Int/Float",json))
+let number = function
+  | (`Int _) as x -> x
+  | (`Float _) as x -> x
+  | json -> raise (Type_mismatch ("Int/Float",json))
+let string = function
+  | `String s -> s
+  | json -> raise (Type_mismatch ("String",json))
+let obj = function
+  | `Object map -> map
+  | json -> raise (Type_mismatch ("Object",json))
+let obj_or_null = function
+  | `Null as x -> (x :> [`Object of (string,t) Map.t | `Null])
+  | (`Object _) as x -> (x :> [`Object of (string,t) Map.t | `Null])
+  | json -> raise (Type_mismatch ("Object/Null",json))
+let obj_keys = function
+  | `Object map -> List.of_enum (Map.keys map)
+  | json -> raise (Type_mismatch ("Object",json))
+let array = function
+  | `Array items -> items
+  | json -> raise (Type_mismatch ("Array",json))
+let array_length = function
+  | `Array items -> Vect.length items
+  | json -> raise (Type_mismatch ("Array",json))
 
-
+module Operators = struct
   let ($) json key =
     try
-        Map.find key (json_object json)
+        Map.find key (obj json)
     with
-      | Not_found -> raise (JSON_not_found (key,json))
-  let ($?) json key = Map.mem key (json_object json)
-  let ($+) json (key,v) = `Object (Map.add key v (json_object json))
-  let ($-) json key = `Object (Map.remove key (json_object json))
-  let ($@) json k = Vect.get (json_array json) k
-  let ($@!) json (k,v) = `Array (Vect.set (json_array json) k v)
+      | Not_found -> raise (No_key (key,json))
+  let ($?) json key = Map.mem key (obj json)
+  let ($+) json (key,v) = `Object (Map.add key v (obj json))
+  let ($-) json key = `Object (Map.remove key (obj json))
+  let ($@) json k = Vect.get (array json) k
+  let ($@!) json (k,v) = `Array (Vect.set (array json) k v)
 
-let empty = `Object Map.empty
+let of_assoc lst = List.fold_left Operators.($+) empty lst
+let of_list lst = `Array (Vect.of_list lst)
+let of_array arr = `Array (Vect.of_array arr)
+
