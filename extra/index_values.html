@@ -13,40 +13,51 @@
 <center><h1>Index of values</h1></center>
 <table>
 <tr><td align="left"><br></td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($)">($)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($)">($)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">obj $ "foo"</code> retrieves the value of key <code class="code">"foo"</code> in the object <code class="code">obj</code>.
 </div>
 </td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($+)">($+)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($+)">($+)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">obj $+ ("foo",json)</code> returns an object in which the key <code class="code">"foo"</code> has been
       set to the value <code class="code">json</code>, replacing a previous value at that key if one was
       present.
 </div>
 </td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($-)">($-)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($-)">($-)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">obj $- "foo"</code> returns an object in which the key <code class="code">"foo"</code> has been removed
       if it existed.
 </div>
 </td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($?)">($?)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($?)">($?)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">obj $? "foo"</code> tests whether object <code class="code">obj</code> has key <code class="code">"foo"</code>.
 </div>
 </td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($@!)">($@!)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($@!)">($@!)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">arr $@! (k,json)</code> returns an array in which zero-based position <code class="code">k</code> has
       been replaced with <code class="code">json</code>.
 </div>
 </td></tr>
-<tr><td><a href="JSON.Ops.html#VAL($@)">($@)</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td><a href="JSON.Operators.html#VAL($@)">($@)</a> [<a href="JSON.Operators.html">JSON.Operators</a>]</td>
 <td><div class="info">
 <code class="code">arr $@ k</code> retrieves the value at zero-based position <code class="code">k</code> in the array <code class="code">arr</code>.
 </div>
 </td></tr>
+<tr><td align="left"><br>A</td></tr>
+<tr><td><a href="JSON.html#VALarray">array</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALarray_length">array_length</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Accessors, any of which may raise <code class="code">JSON.Type_mismatch</code>.
+</div>
+</td></tr>
+<tr><td align="left"><br>B</td></tr>
+<tr><td><a href="JSON.html#VALbool">bool</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>C</td></tr>
 <tr><td><a href="JSON.html#VALcomplete_parse">complete_parse</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
@@ -56,7 +67,23 @@ Expose a YAJL streaming parser to generate <code class="code">JSON.t</code>.
 <tr><td align="left"><br>E</td></tr>
 <tr><td><a href="JSON.html#VALempty">empty</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
-The empty JSON (<code class="code">JSON.parse "{}"</code>)
+The empty JSON (<code class="code">JSON.from_string "{}"</code> or equivalently <code class="code">`Object Map.empty</code>)
+</div>
+</td></tr>
+<tr><td align="left"><br>F</td></tr>
+<tr><td><a href="JSON.html#VALfloat">float</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALfloat'">float'</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALfrom_file">from_file</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Parse a file given the filename; the entire contents are read into memory
+    and then parsed.
+</div>
+</td></tr>
+<tr><td><a href="JSON.html#VALfrom_string">from_string</a> [<a href="JSON.html">JSON</a>]</td>
+<td><div class="info">
+Parse a complete JSON stored in memory.
 </div>
 </td></tr>
 <tr><td align="left"><br>G</td></tr>
@@ -65,60 +92,34 @@ The empty JSON (<code class="code">JSON.parse "{}"</code>)
 Low-level: call YAJL generator functions to generate this JSON.
 </div>
 </td></tr>
-<tr><td align="left"><br>J</td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_array">json_array</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_array'">json_array'</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_array_length">json_array_length</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td><div class="info">
-Runtime coercions/checkers, any of which may raise <code class="code">JSON_type_mismatch</code>.
-</div>
-</td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_bool">json_bool</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_float">json_float</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_float'">json_float'</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_int">json_int</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_number">json_number</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_object">json_object</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_object'">json_object'</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_object_keys">json_object_keys</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_object_or_null">json_object_or_null</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_of_array">json_of_array</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td><div class="info">
-Constructors to ease formulation of JSON using OCaml literal syntax
-</div>
-</td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_of_assoc">json_of_assoc</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_of_list">json_of_list</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
-<td></td></tr>
-<tr><td><a href="JSON.Ops.html#VALjson_string">json_string</a> [<a href="JSON.Ops.html">JSON.Ops</a>]</td>
+<tr><td align="left"><br>I</td></tr>
+<tr><td><a href="JSON.html#VALint">int</a> [<a href="JSON.html">JSON</a>]</td>
 <td></td></tr>
 <tr><td align="left"><br>M</td></tr>
 <tr><td><a href="JSON.html#VALmake_parser">make_parser</a> [<a href="JSON.html">JSON</a>]</td>
 <td></td></tr>
-<tr><td align="left"><br>P</td></tr>
-<tr><td><a href="JSON.html#VALparse">parse</a> [<a href="JSON.html">JSON</a>]</td>
+<tr><td align="left"><br>N</td></tr>
+<tr><td><a href="JSON.html#VALnumber">number</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td align="left"><br>O</td></tr>
+<tr><td><a href="JSON.html#VALobj">obj</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALobj_keys">obj_keys</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALobj_or_null">obj_or_null</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALof_array">of_array</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
-Parse a complete JSON stored in memory.
+Constructors to ease formulating JSON with OCaml syntax literals.
 </div>
 </td></tr>
-<tr><td><a href="JSON.html#VALparse_file">parse_file</a> [<a href="JSON.html">JSON</a>]</td>
-<td><div class="info">
-Parse a file given the filename; the entire contents are read into memory
-    and then parsed.
-</div>
-</td></tr>
+<tr><td><a href="JSON.html#VALof_assoc">of_assoc</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td><a href="JSON.html#VALof_list">of_list</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
+<tr><td align="left"><br>S</td></tr>
+<tr><td><a href="JSON.html#VALstring">string</a> [<a href="JSON.html">JSON</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>T</td></tr>
 <tr><td><a href="JSON.html#VALto_file">to_file</a> [<a href="JSON.html">JSON</a>]</td>
 <td><div class="info">
