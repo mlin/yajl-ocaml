@@ -42,6 +42,9 @@ for objects and
 <a href=" http://ocaml-batteries-team.github.com/batteries-included/hdoc/BatVect.html "> <code class="code">Batteries.Vect</code></a>
 for arrays:<br>
 <pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">[ `Array of <a href="JSON.html#TYPEt">t</a> Batteries_uni.Vect.t<br>       | `Bool of bool<br>       | `Float of float<br>       | `Int of int<br>       | `Null<br>       | `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t<br>       | `String of string ]</code> </pre>
+<div class="info">
+The general type of JSON data.<br>
+</div>
 
 <pre><span id="TYPEjson_object"><span class="keyword">type</span> <code class="type"></code>json_object</span> = <code class="type">[ `Object of (string, <a href="JSON.html#TYPEt">t</a>) Batteries_uni.Map.t ]</code> </pre>
 
@@ -53,9 +56,8 @@ for arrays:<br>
 
 <pre><span id="TYPEjson_number"><span class="keyword">type</span> <code class="type"></code>json_number</span> = <code class="type">[ `Float of float | `Int of int ]</code> </pre>
 <div class="info">
-Type abbreviations for defining the signatures of operations (below) that
-receive the larger JSON type above, but return one of these more-specific
-variant types.<br>
+Subsets of <code class="code">JSON.t</code> that just serve as abbreviations in the signatures of
+operations (below) that return one of these more-specific types.<br>
 </div>
 
 <pre><span class="keyword">module</span> <a href="JSON.Ops.html">Ops</a>: <code class="code">sig</code> <a href="JSON.Ops.html">..</a> <code class="code">end</code></pre><div class="info">
