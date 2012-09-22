@@ -67,7 +67,7 @@ let my_callbacks = {
 
 let parser = YAJL.make_parser my_callbacks [] ;;
 YAJL.parse parser "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\",\"\"]}" ;;
-let events = YAJL.complete_parse parser ;;
+let events = List.rev (YAJL.complete_parse parser) ;;
 
 Printf.printf "%d strings\n"
   (List.length (List.filter (function String _ -> true | _ -> false) events))
