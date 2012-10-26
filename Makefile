@@ -3,6 +3,7 @@ default: all
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
+VERSION:=$(shell grep --only-matching \\d.\\d.\\d src/META | head -n 1 | tr -d '\n')
 
 all: $(YAJL_AR) twt/ocaml+twt
 	cd src && YAJL_PREFIX=$(YAJL_PREFIX) PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind yajl.cmxa yajl.cma
@@ -19,7 +20,8 @@ test: install sample.json
 	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
 	src/test_yajl.native $(CURDIR)/sample.json
 
-extra: install
+extra: twt/ocaml+twt
+	ocamlfind query yajl || $(MAKE) install
 	cd extra && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind JSON.cmxa JSON.cma
 
 install-extra: extra
@@ -62,7 +64,20 @@ clean: tidy
 	rm -rf upstream/local
 	rm -f sample.json
 
-# TODO: make this safer but still convenient
+# generate tarball (GitHub's tarball feature doesn't work with submodules)
+tarball: clean
+	rm -rf upstream twt
+	$(MAKE) git-submodule-incantations
+	cd $(CURDIR)/.. && tar -czf yajl-ocaml-$(VERSION).tar.gz --exclude='*/.git/*' --exclude=".gitignore" --exclude=".DS_Store" yajl-ocaml
+	tar tzf $(CURDIR)/../yajl-ocaml-$(VERSION).tar.gz
+# note to self - subsequent steps to push tarball:
+# git checkout tarball
+# cp ../yajl-ocaml-x.x.x.tar.gz .
+# git add yajl-ocaml-x.x.x.tar.gz
+# git commit -m 'add yajl-ocaml-x.x.x.tar.gz'
+# git push origin tarball
+
+# generate ocamldoc and upload to gh-pages
 gh-pages: clean
 	rm -rf /tmp/yajl.docdir /tmp/extra.docdir
 	$(MAKE) doc

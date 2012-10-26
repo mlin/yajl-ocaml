@@ -5,19 +5,21 @@ parser. Also includes a convenient, high-level JSON representation.
 
 ## Installation
 
-yajl-ocaml works on Linux and Mac OS X with OCaml 3.12 and above.
+yajl-ocaml works on Linux and Mac OS X with OCaml 3.12 and above. The easiest
+way to install it is using [OPAM](http://opam.ocamlpro.com):
+`opam install yajl`.
 
-The package is not yet available in GODI or OASIS-DB. Assuming you have
-[findlib](http://projects.camlcity.org/projects/findlib.html) set up, define
-the `OCAMLFIND_DESTDIR` environment variable if necessary and
+If you don't use OPAM, set up [findlib](http://projects.camlcity.org/projects/findlib.html),
+define the `OCAMLFIND_DESTDIR` environment variable if necessary and
 
 ```git clone https://github.com/mlin/yajl-ocaml.git && cd yajl-ocaml && make install```
 
 The Makefile will automatically pull in a few dependencies, including YAJL
-itself and [ocaml+twt](http://people.csail.mit.edu/mikelin/ocaml+twt/). You
-can then use `ocamlfind` as usual to include the `yajl` package when compiling
-your program (making sure `OCAMLPATH` includes `OCAMLFIND_DESTDIR` if you
-changed it).
+itself and [ocaml+twt](http://people.csail.mit.edu/mikelin/ocaml+twt/).
+
+You can then use `ocamlfind` as usual to include the `yajl` package when
+compiling your program (making sure `OCAMLPATH` includes `OCAMLFIND_DESTDIR` if
+you changed it).
 
 ## API documentation
 
@@ -36,7 +38,8 @@ callbacks.
 
 Here's a program that demonstrates use of the callback API to build up a list
 of the events observed during parsing. It then post-processes the list to
-print the number of string values in the input.
+print the number of string values in the input. In this example, `event list`
+is the type of the context value passed through the callbacks.
 
 ```ocaml
 type event = Null | Bool of bool | Int of int | Float of float | String of string
@@ -105,7 +108,8 @@ JSON representation based on data structures in
 other conveniences, it defines operators to make it especially easy to
 manipulate JSON objects (look up keys, set values, etc.).
 
-To use it, `make install-extra` and then use package `JSON`. See
+To use it `opam install yajl-extra`, or `make install-extra` in the repo
+directory, and then use package `JSON`. Also see
 [ocamldoc:JSON](http://mlin.github.com/yajl-ocaml/extra/JSON.html)
 
 As an example, suppose we want to parse this configuration JSON.
@@ -143,8 +147,8 @@ useful results.
 Given callbacks that produce a comparable general-purpose data structure, such
 as the "extra" JSON library, yajl-ocaml will not be much faster or slower than
 other good OCaml JSON libraries like [Yojson](http://mjambon.com/yojson.html),
-because that task is mainly bound to memory allocation, number parsing, and
-string copying.
+because that task is mainly bound to memory allocation, string copying, and
+number parsing.
 
 yajl-ocaml could be used to its greatest advantage somewhere in between: for
 example, suppose you had to process a large numeric matrix represented as JSON
