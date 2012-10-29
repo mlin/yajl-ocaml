@@ -1,4 +1,4 @@
-version = "0.7.0"
+version = "0.7.1"
 description = "bindings to the YAJL event-driven JSON parser"
 archive(byte) = "yajl.cma"
 archive(native) = "yajl.cmxa"
