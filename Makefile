@@ -3,7 +3,7 @@ default: all
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
-VERSION:=$(shell grep --only-matching \\d.\\d.\\d src/META | head -n 1 | tr -d '\n')
+VERSION:=$(shell grep --only-matching [[:digit:]].[[:digit:]].[[:digit:]] src/META | head -n 1 | tr -d '\n')
 
 all: $(YAJL_AR) twt/ocaml+twt
 	cd src && YAJL_PREFIX=$(YAJL_PREFIX) PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind yajl.cmxa yajl.cma
@@ -25,8 +25,8 @@ extra: twt/ocaml+twt
 	cd extra && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind JSON.cmxa JSON.cma
 
 install-extra: extra
-	ocamlfind remove JSON || true
-	cd extra/_build && ocamlfind install JSON JSON.a JSON.cmi JSON.cma JSON.cmxa JSON.mli ../META
+	ocamlfind remove yajl-extra || true
+	cd extra/_build && ocamlfind install yajl-extra JSON.a JSON.cmi JSON.cma JSON.cmxa JSON.mli ../META
 
 doc-extra: twt/ocaml+twt
 	cd extra && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind JSON.docdir/index.html
@@ -69,6 +69,10 @@ clean: tidy
 	cd twt && (make clean || true)
 	rm -rf upstream/local
 	rm -f sample.json
+
+uninstall:
+	ocamlfind remove yajl
+	ocamlfind remove yajl-extra
 
 # generate tarball (GitHub's tarball feature doesn't work with submodules)
 tarball: clean

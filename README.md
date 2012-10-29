@@ -109,8 +109,8 @@ other conveniences, it defines operators to make it especially easy to
 manipulate JSON objects (look up keys, set values, etc.).
 
 To use it `opam install yajl-extra`, or `make install-extra` in the repo
-directory, and then use package `JSON`. Also see
-[ocamldoc:JSON](http://mlin.github.com/yajl-ocaml/extra/JSON.html)
+directory, and then use package `yajl-extra`. This package provides a module
+`JSON`: [ocamldoc:JSON](http://mlin.github.com/yajl-ocaml/extra/JSON.html)
 
 As an example, suppose we want to parse this configuration JSON.
 
