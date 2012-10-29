@@ -33,7 +33,13 @@ doc-extra: twt/ocaml+twt
 	cp src/ocamldoc_style.css extra/_build/JSON.docdir/style.css
 
 $(YAJL_PREFIX)/lib/libyajl_s.a: .gitmodules upstream/CMakeLists.txt
-	cd upstream && ./configure --prefix $(YAJL_PREFIX) && make install
+	# --
+	# work around yajl's ruby configure script; the following is all it does:
+	mkdir -p upstream/build
+	cd upstream/build && cmake -DCMAKE_INSTALL_PREFIX=$(YAJL_PREFIX) ..
+	# --
+	
+	cd upstream/build && make install
 
 upstream/CMakeLists.txt:
 	$(MAKE) git-submodule-incantations
@@ -59,7 +65,7 @@ tidy:
 	cd extra && ocamlbuild -clean
 
 clean: tidy
-	cd upstream && (make clean || true)
+	cd upstream && (make clean || true) && rm -rf build
 	cd twt && (make clean || true)
 	rm -rf upstream/local
 	rm -f sample.json
