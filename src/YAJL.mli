@@ -208,3 +208,5 @@ val gen_end_map : gen -> unit
 val gen_start_array : gen -> unit
 val gen_end_array : gen -> unit
 
+module UnsafeString : sig
+  val alloc : int -> string

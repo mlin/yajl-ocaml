@@ -509,6 +509,42 @@ let streaming_integration_test () =
           (* confirm we get the same event list back *)
           assert_equal events (YAJL.complete_parse ~t:List.rev parser2)
 
+module UnsafeString = struct
+  (*
+  compare and (=) won't work on strings outside of the OCaml heap!
+  http://caml.inria.fr/pub/ml-archives/caml-list/2006/09/977818689f4ceb2178c592453df7a343.en.html
+  *)
+  let strings_equal s s' =
+    let len = String.length s
+    if String.length s' <> len then false
+    else
+      try
+        for i = 0 to len-1 do
+          if String.unsafe_get s i <> String.unsafe_get s' i then raise Exit
+        true
+      with Exit -> false
+
+  let equality_trial len =
+    let s = String.create len
+    let s' = YAJL.UnsafeString.alloc len
+    assert_equal ~printer:string_of_int len (String.length s')
+    for i = 0 to len-1 do s.[i] <- Char.chr (Random.int 256)
+    String.blit s 0 s' 0 len
+    assert_equal true (strings_equal s s')
+    String.blit s' 0 s 0 len
+    assert_equal true (strings_equal s s')
+
+  let equality_tests () =
+    for i = 1 to 1024 do equality_trial i
+    for j = 1 to 1024 do
+      let len = 1 + int_of_float (2.0 ** (Random.float 21.0))
+      equality_trial len
+
+  let tests = [
+    "random equality" >:: equality_tests
+  ]
+
+
 let all_tests = ("yajl-ocaml tests" >::: [
     "basic" >::: Basic.tests;
     "multiple buffers" >::: MultiBuffer.tests;
@@ -519,6 +555,7 @@ let all_tests = ("yajl-ocaml tests" >::: [
     "pinned buffers" >::: PinnedBuffers.tests;
     "parser garbage collection" >::: ParserGC.tests;
     "generator tests" >::: Gen.tests;
+    "UnsafeString module" >::: UnsafeString.tests
 (*    "streaming integration test" >:: streaming_integration_test *)
 ])
 
