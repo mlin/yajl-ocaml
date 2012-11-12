@@ -6,7 +6,7 @@ YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
 VERSION:=$(shell grep --only-matching [[:digit:]].[[:digit:]].[[:digit:]] src/META | head -n 1 | tr -d '\n')
 
 all: $(YAJL_AR) twt/ocaml+twt
-	cd src && YAJL_PREFIX=$(YAJL_PREFIX) PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind yajl.cmxa yajl.cma
+	cd src && YAJL_PREFIX=$(YAJL_PREFIX) PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind $(OCAMLBUILDFLAGS) yajl.cmxa yajl.cma
 
 install: all
 	ocamlfind remove yajl || true
@@ -17,8 +17,11 @@ doc: twt/ocaml+twt
 	cp src/ocamldoc_style.css src/_build/yajl.docdir/style.css
 
 test: install sample.json
-	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind -lflag yajl.cmxa test/test_yajl.native
+	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind $(OCAMLBUILDFLAGS) test/test_yajl.native
 	src/test_yajl.native $(CURDIR)/sample.json
+
+yajl_pretty: install
+	cd src && PATH=$(CURDIR)/twt:$(PATH) ocamlbuild -use-ocamlfind $(OCAMLBUILDFLAGS) test/yajl_pretty.native	
 
 extra: twt/ocaml+twt
 	ocamlfind query yajl || $(MAKE) install

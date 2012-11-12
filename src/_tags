@@ -1,3 +1,4 @@
 <**/*>: use_yajl
 <**/*.ml{,i}>: pp(ocaml+twt), debug
 <test/test_yajl.*>: package(oUnit), package(batteries), package(yajl)
+<test/yajl_pretty.*>: package(unix), package(yajl)
