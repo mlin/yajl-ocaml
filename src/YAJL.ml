@@ -267,8 +267,3 @@ external gen_end_map : c_gen -> unit = "yajl_ocaml_gen_end_map"
 external gen_start_array : c_gen -> unit = "yajl_ocaml_gen_start_array"
 external gen_end_array : c_gen -> unit = "yajl_ocaml_gen_end_array"
 
-module UnsafeString = struct
-  external yajl_ocaml_unsafestring_alloc : int -> string = "yajl_ocaml_unsafestring_alloc"
-  let alloc len =
-    if len < 0 || len > Sys.max_string_length then invalid_arg "UnsafeString.alloc"
-    yajl_ocaml_unsafestring_alloc len

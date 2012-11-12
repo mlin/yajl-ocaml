@@ -526,17 +526,18 @@ module UnsafeString = struct
 
   let equality_trial len =
     let s = String.create len
-    let s' = YAJL.UnsafeString.alloc len
+    let s' = UnsafeString.create len
     assert_equal ~printer:string_of_int len (String.length s')
     for i = 0 to len-1 do s.[i] <- Char.chr (Random.int 256)
     String.blit s 0 s' 0 len
     assert_equal true (strings_equal s s')
     String.blit s' 0 s 0 len
     assert_equal true (strings_equal s s')
+    UnsafeString.destroy s'
 
   let equality_tests () =
     for i = 1 to 1024 do equality_trial i
-    for j = 1 to 1024 do
+    for j = 1 to 256 do
       let len = 1 + int_of_float (2.0 ** (Random.float 21.0))
       equality_trial len
 

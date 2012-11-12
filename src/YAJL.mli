@@ -90,12 +90,12 @@ parse operation, instead of the last-returned value.
 @param ofs offset into [buf] at which to begin reading data (default: [0])
 @param len amount of data to read (default: [String.length buf - ofs])
 @param pinned {e Unsafe:} set this to true only if you can guarantee that the
-OCaml garbage collector will not relocate the in-memory representation of [buf]
-during the parse operation (including the execution of your callbacks). This
-might be the case if, for example, [buf] resides in memory managed by the
-[Ancient] or [Netsys_mem] libraries. If [buf] is pinned, we don't have to make
-an extra copy of the data for YAJL to work on. To be clear: {e you cannot use
-this on any [string] allocated in the usual way!}
+OCaml garbage collector will not relocate the in-memory representation of
+[buf] during the parse operation (including the execution of your callbacks).
+This might be the case if, for example, [buf] is an {!UnsafeString}, or
+allocated by the [Ancient] or [Netsys_mem] libraries. If [buf] is pinned, we
+don't have to make an extra copy of the data for YAJL to work on. To be clear:
+{e you cannot use this on any [string] allocated in the usual way!}
 *)
 val parse : ?context:'a -> ?ofs:int -> ?len:int -> ?pinned:bool -> 'a parser -> string -> unit
 
@@ -208,5 +208,3 @@ val gen_end_map : gen -> unit
 val gen_start_array : gen -> unit
 val gen_end_array : gen -> unit
 
-module UnsafeString : sig
-  val alloc : int -> string

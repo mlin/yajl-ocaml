@@ -1,1 +1,2 @@
 yajl_stubs.o
+unsafe_string.o
