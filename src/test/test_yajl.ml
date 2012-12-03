@@ -231,6 +231,56 @@ module ParseErrors = struct
     "trivial" >:: trivial
   ]
 
+module IntRepr = struct
+  (* test parsing of borderline integers *)
+
+  let borderline_ints = [ 0L; 1L;
+                          1073741823L; 1073741824L; 2147483647L; 2147483648L;
+                          4611686018427387903L; 4611686018427387904L; 9223372036854775807L;
+                          -1L;
+                          -1073741824L; -1073741825L; -2147483648L; -2147483649L;
+                          -4611686018427387904L; -4611686018427387905L; -9223372036854775807L ]
+  (* Int64.min_int is actually -9223372036854775808L, but YAJL won't parse that:
+     https://github.com/lloyd/yajl/blob/8b48967c74e9b16c07f120b71598f5e5269e8f57/src/yajl_parser.c#L36 *)
+
+  let int () =
+    borderline_ints |> List.iter
+      fun iL ->
+        if Int64.of_int min_int < iL && iL < Int64.of_int max_int then
+          let i = Int64.to_int iL
+          let json = sprintf "{\"foo\": %d}" i
+          let p = YAJL.make_parser int_callbacks []
+          YAJL.parse p json
+          assert_equal ~printer:dump
+            [Start_map; Map_key "foo"; Int i; End_map]
+            YAJL.complete_parse ~t:List.rev p
+
+  let int64 () =
+    borderline_ints |> List.iter
+      fun iL ->
+        let json = sprintf "{\"foo\": %Ld}" iL
+        let p = YAJL.make_parser int64_callbacks []
+        YAJL.parse p json
+        assert_equal ~printer:dump
+          [Start_map; Map_key "foo"; Int64 iL; End_map]
+          YAJL.complete_parse ~t:List.rev p
+
+  let raw () =
+    borderline_ints |> List.iter
+      fun iL ->
+        let json = sprintf "{\"foo\": %Ld}" iL
+        let p = YAJL.make_parser raw_callbacks []
+        YAJL.parse p json
+        assert_equal ~printer:dump
+          [Start_map; Map_key "foo"; Number (Int64.to_string iL); End_map]
+          YAJL.complete_parse ~t:List.rev p
+
+  let tests = [
+    "int" >:: int;
+    "int64" >:: int64;
+    "raw" >:: raw
+  ]
+
 module NumberOverflow = struct
   (* Test receipt of Parse_error due to unrepresentable JSON numbers *)
 
@@ -453,6 +503,16 @@ module Gen = struct
         assert_equal "ok\xc3\x28" (String.sub buf ofs len)
       | _ -> assert false
 
+  let int_repr () =
+    IntRepr.borderline_ints |> List.iter
+      fun iL ->
+        if Int64.of_int min_int < iL && iL < Int64.of_int max_int then
+          let i = Int64.to_int iL
+          test_gen int_callbacks (sprintf "{\"foo\": %d}" i)
+        let json = (sprintf "{\"foo\": %Ld}" iL)
+        test_gen int64_callbacks json
+        test_gen raw_callbacks json
+
   let invalid_float () =
     let yajl = YAJL.make_gen ()
     gen yajl Start_map; gen yajl (Map_key "string")
@@ -465,6 +525,7 @@ module Gen = struct
     "Beautify" >:: beautify_default;
     "Beautify (custom indentation)" >:: beautify_custom;
     "Validate_UTF8" >:: validate_utf8;
+    "int representation" >:: int_repr;
     "Invalid float" >:: invalid_float;
   ]
 
@@ -514,6 +575,7 @@ let all_tests = ("yajl-ocaml tests" >::: [
     "multiple buffers" >::: MultiBuffer.tests;
     "raising exceptions in callbacks" >::: CallbackExceptions.tests;
     "parse errors" >::: ParseErrors.tests;
+    "integer representation" >::: IntRepr.tests;
     "integer overflows" >::: NumberOverflow.tests;
     "parser options" >::: ParserOptions.tests;
     "pinned buffers" >::: PinnedBuffers.tests;
