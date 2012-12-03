@@ -262,17 +262,17 @@ value yajl_ocaml_parse(value box, value dsp, value buf, value ofs, value len, va
     /* Since the OCaml GC is liable to move String_val(buf) around during the operation, we
        cannot just give that to YAJL. Instead we must make our own copy of it. */
     p->op.buf = (unsigned char*) malloc(p->op.bufsz);
-    memcpy(p->op.buf, (String_val(buf)+Int_val(ofs)), p->op.bufsz);
+    memcpy(p->op.buf, (String_val(buf)+Long_val(ofs)), p->op.bufsz);
   } else {
     /* The caller promises that the GC won't move buf around during the operation (they
        somehow allocated it outside of the OCaml heap), so we don't have to copy it. */
-    p->op.buf = (unsigned char*) String_val(buf) + Int_val(ofs);
+    p->op.buf = (unsigned char*) String_val(buf) + Long_val(ofs);
   }
 
   /* Also store a pointer to the buf value for this operation, which the above C callbacks can
      reference in order to avoid further, unnecessary copying of the data */
   p->op.orig_buf = &buf;
-  p->op.orig_buf_ofs = Int_val(ofs);
+  p->op.orig_buf_ofs = Long_val(ofs);
 
   /* set the OCaml context value for this operation (which is actually the
      OCaml representation of the parser). The C callbacks will pass this back
@@ -485,7 +485,7 @@ value yajl_ocaml_gen_clear(value box) {
 value yajl_ocaml_gen_string(value box, value buf, value ofs, value len) {
   CAMLparam4(box, buf, ofs, len);
   CAMLlocal1(tuple);
-  BEGIN_GEN(yajl_gen_string(p->yajl, (unsigned char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
+  BEGIN_GEN(yajl_gen_string(p->yajl, (unsigned char*) (String_val(buf)+Long_val(ofs)), Long_val(len)))
   case yajl_gen_invalid_string:
     CAMLreturn(Val_int(314159)); /* sentinel value recognized by ocaml stub */
   END_GEN("YAJL.gen_string")
@@ -493,7 +493,7 @@ value yajl_ocaml_gen_string(value box, value buf, value ofs, value len) {
 
 value yajl_ocaml_gen_int(value box, value n) {
   CAMLparam2(box, n);
-  BEGIN_GEN(yajl_gen_integer(p->yajl, Int_val(n)))
+  BEGIN_GEN(yajl_gen_integer(p->yajl, Long_val(n)))
   END_GEN("YAJL.gen_int")
 }
 
@@ -514,7 +514,7 @@ value yajl_ocaml_gen_float(value box, value x) {
 
 value yajl_ocaml_gen_number(value box, value buf, value ofs, value len) {
   CAMLparam4(box, buf, ofs, len);
-  BEGIN_GEN(yajl_gen_number(p->yajl, (const char*) (String_val(buf)+Int_val(ofs)), Int_val(len)))
+  BEGIN_GEN(yajl_gen_number(p->yajl, (const char*) (String_val(buf)+Long_val(ofs)), Long_val(len)))
   END_GEN("YAJL.gen_number")
 }
 
