@@ -163,3 +163,13 @@ Ensure you have [oUnit](http://ounit.forge.ocamlcore.org/) and
 installed via findlib. Then, just `make test` in the repo directory. This will
 automatically wget a certain large, pathological JSON before running the tests
 (which use it).
+
+## Version history
+
+#### v0.7.2 (9 Dec 2012)
+
+- Fix JSON generation of large integers
+
+#### v0.7.1 (29 Oct 2012)
+
+- First released on OPAM
