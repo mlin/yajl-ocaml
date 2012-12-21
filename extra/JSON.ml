@@ -135,7 +135,7 @@ let bool = function
   | json -> raise (Type_mismatch ("Bool",json))
 let int = function
   | `Int i -> i
-  | json -> raise (Type_mismatch ("Bool",json))
+  | json -> raise (Type_mismatch ("Int",json))
 let float = function
   | `Float x -> x
   | json -> raise (Type_mismatch ("Float",json))
