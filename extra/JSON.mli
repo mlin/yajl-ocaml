@@ -25,8 +25,8 @@ type t = [
   | `Int of int
   | `Float of float
   | `String of string
-  | `Object of (string,t) Batteries_uni.Map.t
-  | `Array of t Batteries_uni.Vect.t
+  | `Object of (string,t) Batteries.Map.t
+  | `Array of t Batteries.Vect.t
 ]
 
 (** The empty JSON ([JSON.from_string "{}"] or equivalently [`Object Map.empty]) *)
@@ -49,10 +49,10 @@ val float : t -> float
 val float' : t -> float
 val number : t -> [`Int of int | `Float of float]
 val string : t -> string
-val obj : t -> (string,t) Batteries_uni.Map.t
-val obj_or_null : t -> [`Object of (string,t) Batteries_uni.Map.t | `Null]
+val obj : t -> (string,t) Batteries.Map.t
+val obj_or_null : t -> [`Object of (string,t) Batteries.Map.t | `Null]
 val obj_keys : t -> string list
-val array : t -> t Batteries_uni.Vect.t
+val array : t -> t Batteries.Vect.t
 
 (** Accessors, any of which may raise [JSON.Type_mismatch].
 
