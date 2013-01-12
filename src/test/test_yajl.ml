@@ -1,5 +1,5 @@
 open OUnit
-open Batteries_uni
+open Batteries
 open Printf
 
 (* To test the YAJL bindings we will generate a list of the events we observe, and compare the
