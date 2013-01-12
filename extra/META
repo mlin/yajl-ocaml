@@ -1,4 +1,4 @@
-version = "0.7.2"
+version = "0.7.3"
 description = "convenient JSON representation on top of yajl-ocaml"
 archive(byte) = "JSON.cma"
 archive(native) = "JSON.cmxa"

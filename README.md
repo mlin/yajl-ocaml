@@ -166,6 +166,11 @@ automatically wget a certain large, pathological JSON before running the tests
 
 ## Version history
 
+#### v0.7.3 (11 Jan 2013)
+
+- "Extra" JSON library now compiles against batteries 2.x; previous versions
+  used batteries 1.x.
+
 #### v0.7.2 (9 Dec 2012)
 
 - Fix JSON generation of large integers
