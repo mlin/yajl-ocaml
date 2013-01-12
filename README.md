@@ -69,12 +69,17 @@ let my_callbacks = {
 }
 
 let parser = YAJL.make_parser my_callbacks [] ;;
-YAJL.parse parser "{\"foo\": [null,false,true,0,12345,3.14159,6e23,\"bar\",\"\"]}" ;;
+YAJL.parse parser "{\"foo\": [null,false,true,0,12345" ;;
+YAJL.parse parser ",3.14159,6e23,\"bar\",\"\"]}" ;;
 let events = List.rev (YAJL.complete_parse parser) ;;
 
 Printf.printf "%d strings\n"
   (List.length (List.filter (function String _ -> true | _ -> false) events))
 ```
+
+Note that we provided the JSON data to YAJL in multiple parts. Large JSON data
+can be streamed from a file or socket in arbitrary chunks, without buffering it
+all in memory, and the callbacks are invoked as early as possible.
 
 ### JSON generation
 
@@ -87,8 +92,9 @@ let json =
     YAJL.gen_start_map gen;
     YAJL.gen_string gen "key";
     YAJL.gen_start_array gen;
-    YAJL.gen_string gen "value";
+    YAJL.gen_bool gen true;
     List.iter (YAJL.gen_int gen) [1; 2; 3];
+    YAJL.gen_string gen "骆驼\"\000";
     YAJL.gen_end_array gen;
     YAJL.gen_end_map gen;
     let buf, ofs, len = YAJL.gen_get_buf gen in
@@ -98,7 +104,8 @@ let json =
 Printf.printf "%s\n" json
 ```
 
-This produces: `{"key":["value",1,2,3]}`
+This produces: `{"key":[true,1,2,3,"骆驼\"\u0000"]}`. Note that YAJL handled
+escaping the string.
 
 ## High-level JSON representation
 
