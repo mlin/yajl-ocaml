@@ -14,6 +14,8 @@ define the `OCAMLFIND_DESTDIR` environment variable if necessary and
 
 ```git clone https://github.com/mlin/yajl-ocaml.git && cd yajl-ocaml && make install```
 
+[![Build Status](https://travis-ci.org/mlin/yajl-ocaml.png)](https://travis-ci.org/mlin/yajl-ocaml)
+
 The Makefile will automatically pull in a few dependencies, including YAJL
 itself and [ocaml+twt](http://people.csail.mit.edu/mikelin/ocaml+twt/).
 
@@ -170,6 +172,8 @@ Ensure you have [oUnit](http://ounit.forge.ocamlcore.org/) and
 installed via findlib. Then, just `make test` in the repo directory. This will
 automatically wget a certain large, pathological JSON before running the tests
 (which use it).
+
+The tests also run on Travis CI: [![Build Status](https://travis-ci.org/mlin/yajl-ocaml.png)](https://travis-ci.org/mlin/yajl-ocaml)
 
 ## Version history
 
