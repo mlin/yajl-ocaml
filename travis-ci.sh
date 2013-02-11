@@ -18,7 +18,7 @@ opam init
 eval `opam config -env`
 
 # install packages from opam
-opam install ocamlfind ounit
+opam -q -y install ocamlfind ounit
 
 # compile & run tests
 make test
