@@ -1,5 +1,5 @@
 default: all
-.PHONY: default all install doc test extra install-extra doc-extra gh-pages git-submodule-incantations tidy clean
+.PHONY: default all install doc test travis-ci extra install-extra doc-extra gh-pages git-submodule-incantations tidy clean
 
 YAJL_PREFIX:=$(CURDIR)/upstream/local
 YAJL_AR:=$(YAJL_PREFIX)/lib/libyajl_s.a
