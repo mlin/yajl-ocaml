@@ -2,6 +2,7 @@
 #This script runs the unit tests inside a Travis CI worker. See also .travis.yml
 
 export OPAM_VERSION=0.9.1
+export OPAM_PACKAGES=ocamlfind ounit batteries
 
 # install ocaml from apt
 sudo apt-get update -qq
@@ -18,7 +19,7 @@ opam init
 eval `opam config -env`
 
 # install packages from opam
-opam install -q -y ocamlfind ounit batteries
+opam install -q -y ${OPAM_PACKAGES}
 
 # compile & run tests
 make test
