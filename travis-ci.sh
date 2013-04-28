@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 #This script runs the unit tests inside a Travis CI worker. See also .travis.yml
 
-export OPAM_VERSION=0.9.1
+export OPAM_VERSION=1.0.0
 export OPAM_PACKAGES='ocamlfind ounit batteries'
 
 # install ocaml from apt
@@ -15,8 +15,8 @@ pushd opam-${OPAM_VERSION}
 make
 sudo make install
 popd
-opam init
-eval `opam config -env`
+opam init -y
+eval `opam config env`
 
 # install packages from opam
 opam install -q -y ${OPAM_PACKAGES}
